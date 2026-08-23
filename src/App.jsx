@@ -17,10 +17,11 @@ export default function App() {
 }
 
 function Phone() {
-  const [tab, setTab] = useState('calendar')
+  const [tab, setTab] = useState('today')
   const [view, setView] = useState('main')
   const [date, setDate] = useState(todayKey())
   const [completing, setCompleting] = useState(null)
+  const [editingGoal, setEditingGoal] = useState(null)
 
   const finishComplete = useCallback(() => setCompleting(null), [])
 
@@ -29,14 +30,25 @@ function Phone() {
     setView('list')
   }
 
+  function openCreate(initialDate = todayKey()) {
+    setDate(initialDate)
+    setEditingGoal(null)
+    setView('create')
+  }
+
+  function openEdit(goal) {
+    setEditingGoal(goal)
+    setView('create')
+  }
+
   return (
     <div className="stage">
       <div className="phone">
         {view === 'main' && tab === 'today' && (
-          <Home onOpenToday={() => openDate(todayKey())} />
+          <Home onComplete={setCompleting} onAdd={openCreate} />
         )}
         {view === 'main' && tab === 'calendar' && (
-          <Calendar onSelectDate={openDate} onAdd={() => setView('create')} />
+          <Calendar onSelectDate={openDate} onAdd={() => openCreate(todayKey())} />
         )}
         {view === 'main' && tab === 'pet' && <PetScreen />}
         {view === 'list' && (
@@ -44,10 +56,15 @@ function Phone() {
             date={date}
             onBack={() => setView('main')}
             onComplete={setCompleting}
+            onEdit={openEdit}
+            onAdd={openCreate}
           />
         )}
         {view === 'create' && (
           <CreateGoal
+            key={editingGoal?.id ?? `new-${date}`}
+            editingGoal={editingGoal}
+            initialDate={date}
             onBack={() => setView('main')}
             onSaved={(savedDate) => {
               setDate(savedDate)
@@ -57,9 +74,7 @@ function Phone() {
           />
         )}
         {view === 'main' && <TabBar tab={tab} onChange={setTab} />}
-        {completing && (
-          <CompleteOverlay goal={completing} onDone={finishComplete} />
-        )}
+        {completing && <CompleteOverlay completion={completing} onDone={finishComplete} />}
       </div>
     </div>
   )

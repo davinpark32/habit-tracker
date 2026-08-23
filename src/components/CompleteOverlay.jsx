@@ -1,52 +1,26 @@
 import { useEffect, useRef, useState } from 'react'
-import Pet from './Pet'
+import { CATEGORY_BY_ID } from '../goalCatalog'
 import { useStore } from '../store'
 
-export default function CompleteOverlay({ goal, onDone }) {
-  const { completeGoal, xpInLevel, xpMax, level, reward } = useStore()
+export default function CompleteOverlay({ completion, onDone }) {
+  const { completeGoal, markDayClearSeen } = useStore()
+  const { goal, date, dayClear } = completion
+  const category = CATEGORY_BY_ID[goal.category] ?? CATEGORY_BY_ID.life
   const [phase, setPhase] = useState('check')
-  const [xpShown, setXpShown] = useState(xpInLevel)
-  const rewarded = useRef(false)
+  const applied = useRef(false)
 
   useEffect(() => {
-    if (!rewarded.current) {
-      rewarded.current = true
-      completeGoal(goal.id)
-    }
-    const timers = [
-      setTimeout(() => setPhase('xp'), 450),
-      setTimeout(() => {
-        setPhase('pet')
-        setXpShown((value) => Math.min(xpMax, value + reward))
-      }, 950),
-      setTimeout(onDone, 2100),
-    ]
+    if (!applied.current) { applied.current = true; completeGoal(goal.id, date); if (dayClear) markDayClearSeen(date) }
+    const timers = [setTimeout(() => setPhase('candy'), 500), setTimeout(() => dayClear ? setPhase('day') : onDone(), 1350)]
+    if (dayClear) timers.push(setTimeout(onDone, 2600))
     return () => timers.forEach(clearTimeout)
-  }, [completeGoal, goal.id, onDone, reward, xpMax])
+  }, [completeGoal, date, dayClear, goal.id, markDayClearSeen, onDone])
 
   return (
-    <div className="overlay">
-      <div className={`burst ${phase}`}>
-        {phase !== 'pet' && (
-          <>
-            <div className="check">✓</div>
-            <p className="done-word">완료!</p>
-            {phase === 'xp' && <p className="xp-pop">+{reward} XP</p>}
-          </>
-        )}
-        {phase === 'pet' && (
-          <div className="reward-pet">
-            <Pet size={180} mood="happy" grown={Math.min(level - 1, 6)} />
-            <div className="stars">✦ ✦ ✦</div>
-            <p className="xp-label">
-              XP {xpShown} / {xpMax}
-            </p>
-            <div className="gauge">
-              <div className="gauge-fill" style={{ width: `${(xpShown / xpMax) * 100}%` }} />
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+    <div className="overlay"><div className={`burst ${phase}`}>
+      {phase === 'check' && <><div className="check">✓</div><p className="done-word">완료!</p></>}
+      {phase === 'candy' && <div className="earned-candy"><span style={{ background: category.color }}>{category.icon}</span><p>{category.candy}를 얻었어요!</p><small>펫 화면에서 직접 먹여보세요</small></div>}
+      {phase === 'day' && <div className="day-clear"><div className="check">✓</div><p className="done-word">오늘의 목표 클리어!</p><small>수고했어요!</small></div>}
+    </div></div>
   )
 }

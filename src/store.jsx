@@ -1,11 +1,9 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { CATEGORY_BY_ID } from './goalCatalog'
 
-const XP_PER_LEVEL = 200
-const XP_REWARD = 10
+const STORAGE_KEY = 'hopit.prototype.v2'
 
-function pad(n) {
-  return String(n).padStart(2, '0')
-}
+function pad(n) { return String(n).padStart(2, '0') }
 
 export function toDateKey(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
@@ -21,71 +19,72 @@ export function formatKoreanDate(key) {
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
 }
 
-export function todayKey() {
-  return toDateKey(new Date())
-}
+export function todayKey() { return toDateKey(new Date()) }
 
-function shiftDays(key, days) {
+export function shiftDays(key, days) {
   const date = parseDateKey(key)
   date.setDate(date.getDate() + days)
   return toDateKey(date)
 }
 
-function seedGoals(today) {
-  const t = (offset, title, completed) => ({
-    id: crypto.randomUUID(),
-    title,
-    date: shiftDays(today, offset),
-    completed,
-  })
-
-  return [
-    t(0, '헬스장에서 운동하기', false),
-    t(0, '영어 단어 20개 외우기', false),
-    t(0, '독서 30분 하기', false),
-    t(0, '물 2L 마시기', true),
-    t(-1, '아침 산책 20분', true),
-    t(-1, '비타민 챙겨 먹기', true),
-    t(-2, '스트레칭 10분', true),
-    t(-3, '물 2L 마시기', true),
-    t(-4, '영어 단어 20개 외우기', true),
-    t(-5, '독서 30분 하기', true),
-    t(-6, '헬스장에서 운동하기', true),
-    t(-7, '물 2L 마시기', false),
-    t(-7, '명상 5분', true),
-    t(-9, '친구에게 안부 메시지', true),
-    t(2, '주말 러닝', false),
-    t(4, '방 정리하기', false),
-  ]
+function makeGoal(title, date, category, completed = false) {
+  return {
+    id: crypto.randomUUID(), title, startDate: date, endDate: date, repeatDays: [], category,
+    completions: completed ? { [date]: true } : {}, rewardedDates: completed ? { [date]: true } : {},
+  }
 }
 
-function dayStatus(goals) {
-  if (goals.length === 0) return 'empty'
-  const completed = goals.filter((g) => g.completed).length
-  if (completed === goals.length) return 'done'
-  if (completed > 0) return 'partial'
+function initialState() {
+  const today = todayKey()
+  return {
+    goals: [
+      makeGoal('헬스장 가기', today, 'exercise'), makeGoal('영어 공부하기', today, 'study'),
+      makeGoal('책 읽기', today, 'study'), makeGoal('물 2L 마시기', today, 'life', true),
+      makeGoal('산책하기', shiftDays(today, -1), 'exercise', true),
+      makeGoal('친구에게 연락하기', shiftDays(today, -2), 'relationship', true),
+      makeGoal('방 청소하기', shiftDays(today, 2), 'life'),
+    ],
+    candies: [],
+    pet: { fedCount: 0, stats: { wisdom: 0, charm: 0, vitality: 0, warmth: 0, will: 0, diligence: 0 } },
+    dayClearSeen: {},
+  }
+}
+
+function emptyState() {
+  return {
+    goals: [], candies: [],
+    pet: { fedCount: 0, stats: { wisdom: 0, charm: 0, vitality: 0, warmth: 0, will: 0, diligence: 0 } },
+    dayClearSeen: {},
+  }
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? JSON.parse(saved) : initialState()
+  } catch { return initialState() }
+}
+
+function occursOn(goal, date) {
+  if (date < goal.startDate || date > goal.endDate) return false
+  if (!goal.repeatDays?.length) return true
+  return goal.repeatDays.includes(parseDateKey(date).getDay())
+}
+
+function statusOf(instances) {
+  if (instances.length === 0) return 'empty'
+  const count = instances.filter((item) => item.completed).length
+  if (count === instances.length) return 'done'
+  if (count > 0) return 'partial'
   return 'planned'
 }
 
-function isCompleteDay(dayGoals) {
-  return dayGoals.length > 0 && dayGoals.every((g) => g.completed)
-}
-
 function computeStreak(goals, today) {
-  const byDate = new Map()
-  for (const goal of goals) {
-    if (!byDate.has(goal.date)) byDate.set(goal.date, [])
-    byDate.get(goal.date).push(goal)
-  }
-
+  const get = (date) => goals.filter((goal) => occursOn(goal, date)).map((goal) => ({ completed: Boolean(goal.completions?.[date]) }))
   let cursor = today
-  if (!isCompleteDay(byDate.get(cursor) ?? [])) cursor = shiftDays(cursor, -1)
-
+  if (statusOf(get(cursor)) !== 'done') cursor = shiftDays(cursor, -1)
   let streak = 0
-  while (isCompleteDay(byDate.get(cursor) ?? [])) {
-    streak += 1
-    cursor = shiftDays(cursor, -1)
-  }
+  while (statusOf(get(cursor)) === 'done') { streak += 1; cursor = shiftDays(cursor, -1) }
   return streak
 }
 
@@ -93,64 +92,99 @@ const StoreContext = createContext(null)
 
 export function StoreProvider({ children }) {
   const today = todayKey()
-  const [goals, setGoals] = useState(() => seedGoals(today))
-  const [xp, setXp] = useState(920)
+  const [state, setState] = useState(loadState)
 
-  const level = Math.floor(xp / XP_PER_LEVEL) + 1
-  const xpInLevel = xp % XP_PER_LEVEL
-  const streak = useMemo(() => computeStreak(goals, today), [goals, today])
+  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)) }, [state])
 
-  function goalsOn(date) {
-    return goals
-      .filter((g) => g.date === date)
-      .sort((a, b) => Number(a.completed) - Number(b.completed))
-  }
+  const goalsOn = useCallback((date) => state.goals
+    .filter((goal) => occursOn(goal, date))
+    .map((goal) => ({ ...goal, date, completed: Boolean(goal.completions?.[date]), rewardClaimed: Boolean(goal.rewardedDates?.[date]) }))
+    .sort((a, b) => Number(a.completed) - Number(b.completed)), [state.goals])
 
-  const addGoal = useCallback((title, date) => {
-    setGoals((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), title: title.trim(), date, completed: false },
-    ])
+  const addGoal = useCallback((input) => {
+    setState((prev) => ({ ...prev, goals: [...prev.goals, {
+      id: crypto.randomUUID(), title: input.title.trim(), startDate: input.startDate,
+      endDate: input.endDate || input.startDate, repeatDays: input.repeatDays || [], category: input.category,
+      completions: {}, rewardedDates: {},
+    }] }))
   }, [])
 
-  const completeGoal = useCallback((id) => {
-    setGoals((prev) =>
-      prev.map((goal) => (goal.id === id && !goal.completed ? { ...goal, completed: true } : goal)),
-    )
-    setXp((value) => value + XP_REWARD)
+  const updateGoal = useCallback((id, input) => {
+    setState((prev) => ({ ...prev, goals: prev.goals.map((goal) => goal.id === id ? {
+      ...goal, title: input.title.trim(), startDate: input.startDate,
+      endDate: input.endDate || input.startDate, repeatDays: input.repeatDays || [], category: input.category,
+    } : goal) }))
   }, [])
+
+  const completeGoal = useCallback((id, date) => {
+    setState((prev) => {
+      const goal = prev.goals.find((item) => item.id === id)
+      if (!goal || goal.completions?.[date]) return prev
+      const alreadyRewarded = Boolean(goal.rewardedDates?.[date])
+      const category = CATEGORY_BY_ID[goal.category] ?? CATEGORY_BY_ID.life
+      const candy = alreadyRewarded ? null : {
+        id: crypto.randomUUID(), category: category.id, stat: category.stat, label: category.candy,
+        icon: category.icon, color: category.color, earnedAt: Date.now(),
+      }
+      return {
+        ...prev,
+        goals: prev.goals.map((item) => item.id === id ? {
+          ...item, completions: { ...item.completions, [date]: true }, rewardedDates: { ...item.rewardedDates, [date]: true },
+        } : item),
+        candies: candy ? [...prev.candies, candy] : prev.candies,
+      }
+    })
+  }, [])
+
+  const undoGoal = useCallback((id, date) => {
+    setState((prev) => ({ ...prev, goals: prev.goals.map((goal) => {
+      if (goal.id !== id) return goal
+      const completions = { ...goal.completions }
+      delete completions[date]
+      return { ...goal, completions }
+    }) }))
+  }, [])
+
+  const feedCandy = useCallback((id) => {
+    setState((prev) => {
+      const candy = prev.candies.find((item) => item.id === id)
+      if (!candy) return prev
+      return {
+        ...prev, candies: prev.candies.filter((item) => item.id !== id),
+        pet: { fedCount: prev.pet.fedCount + 1, stats: { ...prev.pet.stats, [candy.stat]: prev.pet.stats[candy.stat] + 1 } },
+      }
+    })
+  }, [])
+
+  const markDayClearSeen = useCallback((date) => {
+    setState((prev) => ({ ...prev, dayClearSeen: { ...prev.dayClearSeen, [date]: true } }))
+  }, [])
+
+  const resetAll = useCallback(() => { localStorage.removeItem(STORAGE_KEY); setState(emptyState()) }, [])
 
   function monthMarks(year, month) {
-    const prefix = `${year}-${pad(month + 1)}-`
-    const map = {}
-    for (const goal of goals) {
-      if (!goal.date.startsWith(prefix)) continue
-      if (!map[goal.date]) map[goal.date] = []
-      map[goal.date].push(goal)
-    }
     const marks = {}
-    for (const [date, dayGoals] of Object.entries(map)) {
-      marks[date] = dayStatus(dayGoals)
+    for (let day = 1; day <= new Date(year, month + 1, 0).getDate(); day += 1) {
+      const date = toDateKey(new Date(year, month, day))
+      const status = statusOf(goalsOn(date))
+      if (status !== 'empty') marks[date] = status
     }
     return marks
   }
 
+  const streak = useMemo(() => computeStreak(state.goals, today), [state.goals, today])
+  const growthStage = Math.min(5, Math.floor(state.pet.fedCount / 5))
   const value = {
-    today,
-    goals,
-    xp,
-    xpInLevel,
-    xpMax: XP_PER_LEVEL,
-    level,
-    streak,
-    reward: XP_REWARD,
-    goalsOn,
-    addGoal,
-    completeGoal,
-    monthMarks,
+    today, goals: state.goals, candies: state.candies, pet: state.pet, growthStage, streak,
+    goalsOn, addGoal, updateGoal, completeGoal, undoGoal, feedCandy, monthMarks,
+    dayClearSeen: state.dayClearSeen, markDayClearSeen, resetAll,
     isPast: (date) => date < today,
+    isDayComplete: (date) => statusOf(goalsOn(date)) === 'done',
+    willCompleteDay: (id, date) => {
+      const instances = goalsOn(date)
+      return instances.length > 0 && instances.every((item) => item.id === id || item.completed)
+    },
   }
-
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
 

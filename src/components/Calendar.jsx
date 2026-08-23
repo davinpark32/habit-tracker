@@ -58,9 +58,6 @@ export default function Calendar({ onSelectDate, onAdd }) {
           <button className="icon-btn" onClick={() => shift(1)} aria-label="다음 달">
             ›
           </button>
-          <button className="add-btn" onClick={onAdd}>
-            +
-          </button>
         </div>
       </header>
       <div className="calendar">
@@ -82,7 +79,7 @@ export default function Calendar({ onSelectDate, onAdd }) {
                 onClick={() => onSelectDate(key)}
               >
                 <span>{day}</span>
-                <i className={`dot ${mark ?? ''}`} />
+                {mark === 'done' && <i className="day-stamp">○</i>}
               </button>
             )
           })}
@@ -90,6 +87,7 @@ export default function Calendar({ onSelectDate, onAdd }) {
       </div>
       <p className="hint">날짜를 누르면 그날의 목표가 열려요</p>
       <p className="hint quiet">{formatKoreanDate(today)} 기준</p>
+      <button className="fab" onClick={onAdd} aria-label="목표 추가">+</button>
     </section>
   )
 }
