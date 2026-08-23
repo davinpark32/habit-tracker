@@ -20,7 +20,9 @@ html,
 body,
 #root {
   margin: 0;
-  min-height: 100%;
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden;
   background: #f3e7db;
   color: var(--ink);
 }
@@ -34,15 +36,19 @@ select {
 button { cursor: pointer; }
 
 .stage {
-  min-height: 100dvh;
+  height: 100%;
+  min-height: 0;
   display: grid;
   place-items: center;
   padding: 16px;
+  overflow: hidden;
 }
 
 .phone {
   width: min(100%, 390px);
-  height: min(844px, 100dvh);
+  height: min(844px, 100%);
+  max-height: 100%;
+  min-height: 0;
   background: var(--bg);
   border-radius: 32px;
   box-shadow: var(--shadow);
@@ -50,12 +56,23 @@ button { cursor: pointer; }
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  isolation: isolate;
 }
 
 .screen {
   flex: 1;
+  min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
   padding: 22px 20px 24px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.screen::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .topbar {
@@ -220,10 +237,10 @@ button { cursor: pointer; }
 }
 
 .tabbar {
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  position: relative;
+  z-index: 20;
+  flex-shrink: 0;
+  margin: 8px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   background: #fff;
@@ -575,7 +592,7 @@ button { cursor: pointer; }
   background: rgba(255, 246, 238, 0.88);
   display: grid;
   place-items: center;
-  z-index: 5;
+  z-index: 50;
   backdrop-filter: blur(8px);
   font: inherit;
   color: inherit;
@@ -687,6 +704,12 @@ button { cursor: pointer; }
 }
 
 @media (max-width: 480px) {
+  html,
+  body,
+  #root {
+    max-height: 100svh;
+  }
+
   .stage {
     padding: 0;
     background: var(--bg);
@@ -694,7 +717,8 @@ button { cursor: pointer; }
 
   .phone {
     width: 100%;
-    height: 100dvh;
+    height: 100%;
+    max-height: 100svh;
     border-radius: 0;
     box-shadow: none;
   }
@@ -709,13 +733,12 @@ button { cursor: pointer; }
 .empty-state > span { font-size: 54px; color: var(--line); }
 .empty-state.compact { min-height: 100px; }
 
-.fab { position: absolute; right: 24px; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 3; width: 58px; height: 58px; border-radius: 50%; border: 0; background: var(--coral); color: white; font-size: 32px; box-shadow: 0 10px 24px rgba(239,122,74,.35); }
+.fab { position: absolute; right: 24px; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 21; width: 58px; height: 58px; border-radius: 50%; border: 0; background: var(--coral); color: white; font-size: 32px; box-shadow: 0 10px 24px rgba(239,122,74,.35); }
 .fab:active { transform: scale(.95); }
 
 .tab-clear {
   flex-shrink: 0;
-  height: calc(168px + env(safe-area-inset-bottom, 0px));
-  min-height: calc(168px + env(safe-area-inset-bottom, 0px));
+  height: 76px;
   pointer-events: none;
 }
 
