@@ -14,6 +14,7 @@ export default function Home({ onComplete, onAdd }) {
       <div className="list-heading"><h2 className="list-title">오늘의 목표</h2><span>{goals.filter((goal) => goal.completed).length}/{goals.length}</span></div>
       {goals.length === 0 && <div className="empty-state compact"><p>오늘은 설정된 목표가 없어요.</p></div>}
       <div className="cards home-cards">{goals.map((goal) => <GoalCard key={goal.id} goal={goal} onComplete={() => complete(goal)} onUndo={() => undoGoal(goal.id, today)} />)}</div>
+      <div className="tab-clear" aria-hidden="true" />
       <button className="fab" onClick={() => onAdd(today)} aria-label="목표 추가">+</button>
     </section>
   )

@@ -55,7 +55,7 @@ button { cursor: pointer; }
 .screen {
   flex: 1;
   overflow: auto;
-  padding: 22px 20px 96px;
+  padding: 22px 20px 24px;
 }
 
 .topbar {
@@ -223,7 +223,7 @@ button { cursor: pointer; }
   position: absolute;
   left: 16px;
   right: 16px;
-  bottom: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   background: #fff;
@@ -709,8 +709,13 @@ button { cursor: pointer; }
 .empty-state > span { font-size: 54px; color: var(--line); }
 .empty-state.compact { min-height: 100px; }
 
-.fab { position: absolute; right: 24px; bottom: 88px; z-index: 3; width: 58px; height: 58px; border-radius: 50%; border: 0; background: var(--coral); color: white; font-size: 32px; box-shadow: 0 10px 24px rgba(239,122,74,.35); }
+.fab { position: absolute; right: 24px; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 3; width: 58px; height: 58px; border-radius: 50%; border: 0; background: var(--coral); color: white; font-size: 32px; box-shadow: 0 10px 24px rgba(239,122,74,.35); }
 .fab:active { transform: scale(.95); }
+
+.tab-clear {
+  height: calc(140px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
 
 .create-screen { padding-bottom: 28px; }
 .field-label { display: block; font-weight: 700; margin-bottom: 8px; }
@@ -745,7 +750,7 @@ button { cursor: pointer; }
   50% { opacity: 1; }
 }
 
-.pet-screen { padding-bottom: 110px; }
+.pet-screen { padding-bottom: 24px; }
 .text-btn { border: 0; background: transparent; font-size: 12px; font-weight: 700; }
 .text-btn.danger { color: #c45b58; }
 .pet-drop { position: relative; display: grid; justify-items: center; padding: 6px 0 16px; border: 2px dashed transparent; border-radius: 28px; transition: .2s; }

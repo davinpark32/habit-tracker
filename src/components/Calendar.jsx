@@ -83,6 +83,7 @@ export default function Calendar({ onSelectDate, onAdd }) {
       </div>
       <p className="hint">날짜를 누르면 그날의 목표가 열려요</p>
       <p className="hint quiet">초록은 그날 목표를 모두 끝낸 날이에요</p>
+      <div className="tab-clear" aria-hidden="true" />
       <button className="fab" onClick={onAdd} aria-label="목표 추가">+</button>
     </section>
   )
