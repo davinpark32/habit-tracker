@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { formatKoreanDate, parseDateKey, toDateKey, useStore } from '../store'
+import { parseDateKey, toDateKey, useStore } from '../store'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -18,6 +18,7 @@ export default function Calendar({ onSelectDate, onAdd }) {
   const { today, monthMarks } = useStore()
   const now = parseDateKey(today)
   const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() })
+  const [pressed, setPressed] = useState(null)
   const swipe = useRef(null)
 
   const cells = useMemo(
@@ -47,18 +48,10 @@ export default function Calendar({ onSelectDate, onAdd }) {
 
   return (
     <section className="screen" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-      <header className="topbar">
-        <button className="icon-btn" onClick={() => shift(-1)} aria-label="이전 달">
-          ‹
-        </button>
-        <h1>
-          {cursor.year}년 {cursor.month + 1}월
-        </h1>
-        <div className="top-actions">
-          <button className="icon-btn" onClick={() => shift(1)} aria-label="다음 달">
-            ›
-          </button>
-        </div>
+      <header className="topbar calendar-head">
+        <button className="icon-btn round" onClick={() => shift(-1)} aria-label="이전 달">‹</button>
+        <h1>{cursor.year}년 {cursor.month + 1}월</h1>
+        <button className="icon-btn round" onClick={() => shift(1)} aria-label="다음 달">›</button>
       </header>
       <div className="calendar">
         <div className="weekdays">
@@ -75,18 +68,21 @@ export default function Calendar({ onSelectDate, onAdd }) {
             return (
               <button
                 key={key}
-                className={`cell ${isToday ? 'today' : ''} ${mark ?? ''}`}
+                className={`cell ${isToday ? 'today' : ''} ${mark ?? ''} ${pressed === key ? 'pressed' : ''}`}
+                onPointerDown={() => setPressed(key)}
+                onPointerUp={() => setPressed(null)}
+                onPointerCancel={() => setPressed(null)}
+                onPointerLeave={() => setPressed(null)}
                 onClick={() => onSelectDate(key)}
               >
                 <span>{day}</span>
-                {mark === 'done' && <i className="day-stamp">○</i>}
               </button>
             )
           })}
         </div>
       </div>
       <p className="hint">날짜를 누르면 그날의 목표가 열려요</p>
-      <p className="hint quiet">{formatKoreanDate(today)} 기준</p>
+      <p className="hint quiet">초록은 그날 목표를 모두 끝낸 날이에요</p>
       <button className="fab" onClick={onAdd} aria-label="목표 추가">+</button>
     </section>
   )

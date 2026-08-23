@@ -50,14 +50,6 @@ function initialState() {
   }
 }
 
-function emptyState() {
-  return {
-    goals: [], candies: [],
-    pet: { fedCount: 0, stats: { wisdom: 0, charm: 0, vitality: 0, warmth: 0, will: 0, diligence: 0 } },
-    dayClearSeen: {},
-  }
-}
-
 function loadState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -160,7 +152,10 @@ export function StoreProvider({ children }) {
     setState((prev) => ({ ...prev, dayClearSeen: { ...prev.dayClearSeen, [date]: true } }))
   }, [])
 
-  const resetAll = useCallback(() => { localStorage.removeItem(STORAGE_KEY); setState(emptyState()) }, [])
+  const restoreSamples = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEY)
+    setState(initialState())
+  }, [])
 
   function monthMarks(year, month) {
     const marks = {}
@@ -177,7 +172,7 @@ export function StoreProvider({ children }) {
   const value = {
     today, goals: state.goals, candies: state.candies, pet: state.pet, growthStage, streak,
     goalsOn, addGoal, updateGoal, completeGoal, undoGoal, feedCandy, monthMarks,
-    dayClearSeen: state.dayClearSeen, markDayClearSeen, resetAll,
+    dayClearSeen: state.dayClearSeen, markDayClearSeen, restoreSamples,
     isPast: (date) => date < today,
     isDayComplete: (date) => statusOf(goalsOn(date)) === 'done',
     willCompleteDay: (id, date) => {

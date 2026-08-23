@@ -7,5 +7,6 @@ export default defineConfig({
   base: '/habit-tracker/',
   server: {
     port: 5173,
+    host: true,
   },
 })

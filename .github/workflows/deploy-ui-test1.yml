@@ -1,0 +1,57 @@
+name: Deploy UI test 1
+
+on:
+  push:
+    branches: [ux/complete-tap-to-continue]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-src
+      - uses: actions/checkout@v4
+        with:
+          path: test-src
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: test-src/package-lock.json
+      - name: Build main site
+        working-directory: main-src
+        run: npm ci && npm run build
+      - name: Build UI test 1
+        working-directory: test-src
+        run: npm ci && npx vite build --base /habit-tracker/ui-test1/
+      - name: Combine sites
+        run: |
+          mkdir -p site/ui-test1
+          cp -R main-src/dist/. site/
+          cp -R test-src/dist/. site/ui-test1/
+          cp site/ui-test1/index.html site/ui-test1/404.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

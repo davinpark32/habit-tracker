@@ -2,13 +2,25 @@ import { useEffect, useRef, useState } from 'react'
 import { CATEGORY_BY_ID } from '../goalCatalog'
 import { useStore } from '../store'
 
+const CHECK_MS = 700
+
 export default function CompleteOverlay({ completion, onDone }) {
   const { completeGoal, markDayClearSeen } = useStore()
   const { goal, date, dayClear } = completion
   const category = CATEGORY_BY_ID[goal.category] ?? CATEGORY_BY_ID.life
   const earnedCandy = !goal.rewardClaimed
   const [phase, setPhase] = useState('check')
+  const [waiting, setWaiting] = useState(false)
   const applied = useRef(false)
+  const finishedCheck = useRef(false)
+
+  function nextAfterCheck() {
+    if (finishedCheck.current) return
+    finishedCheck.current = true
+    if (earnedCandy) setPhase('candy')
+    else if (dayClear) setPhase('day')
+    setWaiting(true)
+  }
 
   useEffect(() => {
     if (!applied.current) {
@@ -17,21 +29,22 @@ export default function CompleteOverlay({ completion, onDone }) {
       if (dayClear) markDayClearSeen(date)
     }
 
-    const timers = []
-    if (earnedCandy) {
-      timers.push(setTimeout(() => setPhase('candy'), 500))
-      timers.push(setTimeout(() => (dayClear ? setPhase('day') : onDone()), 1350))
-    } else {
-      timers.push(setTimeout(() => (dayClear ? setPhase('day') : onDone()), 700))
-    }
-    if (dayClear) timers.push(setTimeout(onDone, earnedCandy ? 2600 : 2000))
+    const checkTimer = setTimeout(nextAfterCheck, CHECK_MS)
+    return () => clearTimeout(checkTimer)
+  }, [completeGoal, date, dayClear, earnedCandy, goal.id, markDayClearSeen])
 
-    return () => timers.forEach(clearTimeout)
-  }, [completeGoal, date, dayClear, earnedCandy, goal.id, markDayClearSeen, onDone])
+  function advance() {
+    if (!waiting) return
+    if (phase === 'candy' && dayClear) {
+      setPhase('day')
+      return
+    }
+    onDone()
+  }
 
   return (
-    <div className="overlay">
-      <div className={`burst ${phase}`}>
+    <button type="button" className="overlay" onClick={advance}>
+      <div className={`burst ${phase}`} key={phase}>
         {phase === 'check' && (
           <>
             <div className="check">✓</div>
@@ -52,7 +65,8 @@ export default function CompleteOverlay({ completion, onDone }) {
             <small>수고했어요!</small>
           </div>
         )}
+        {waiting && <p className="continue-hint">탭해서 계속</p>}
       </div>
-    </div>
+    </button>
   )
 }

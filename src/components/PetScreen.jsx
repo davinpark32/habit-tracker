@@ -4,7 +4,7 @@ import Pet from './Pet'
 import { useStore } from '../store'
 
 export default function PetScreen() {
-  const { candies, pet, growthStage, streak, feedCandy, resetAll } = useStore()
+  const { candies, pet, growthStage, streak, feedCandy, restoreSamples } = useStore()
   const [happy, setHappy] = useState(false)
   const [dragging, setDragging] = useState(null)
 
@@ -12,13 +12,13 @@ export default function PetScreen() {
     if (!id) return
     feedCandy(id); setDragging(null); setHappy(true); setTimeout(() => setHappy(false), 900)
   }
-  function reset() {
-    if (window.confirm('목표, 완료 기록, 사탕과 펫 성장을 모두 초기화할까요? 이 작업은 되돌릴 수 없어요.')) resetAll()
+  function restore() {
+    if (window.confirm('목표, 완료 기록, 사탕과 펫 성장을 지우고 샘플 목표로 다시 시작할까요? 이 작업은 되돌릴 수 없어요.')) restoreSamples()
   }
 
   return (
     <section className="screen pet-screen">
-      <header className="topbar"><h1>포켓 파를레</h1><button className="text-btn danger" onClick={reset}>전체 초기화</button></header>
+      <header className="topbar"><h1>포켓 파를레</h1><button className="text-btn danger" onClick={restore}>샘플 복원</button></header>
       <div className={`pet-drop ${dragging ? 'ready' : ''}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); feed(event.dataTransfer.getData('text/plain') || dragging) }}>
         <Pet size={190} grown={growthStage} mood={happy ? 'happy' : 'idle'} />
         {happy && <div className="speech">맛있어! ✦</div>}
