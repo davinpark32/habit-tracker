@@ -502,8 +502,42 @@ button { cursor: pointer; }
   margin-bottom: 8px;
 }
 
+.pet svg {
+  display: block;
+  overflow: visible;
+}
+
+.pet-body {
+  transform-origin: 120px 188px;
+  animation: pet-breath 2.8s ease-in-out infinite;
+}
+
+.pet-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pet-blink 4.4s ease-in-out infinite;
+}
+
 .pet-happy {
   animation: bounce 0.55s ease;
+}
+
+.pet-happy .pet-eye {
+  animation: none;
+  transform: scaleY(0.42);
+}
+
+@keyframes pet-breath {
+  0%,
+  100% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(1.5px) scale(1.025, 0.975); }
+}
+
+@keyframes pet-blink {
+  0%,
+  90%,
+  100% { transform: scaleY(1); }
+  93% { transform: scaleY(0.08); }
 }
 
 @keyframes pop {
