@@ -429,7 +429,7 @@ button { cursor: pointer; }
   text-align: left;
   padding: 18px;
   user-select: none;
-  touch-action: none;
+  touch-action: pan-y;
   display: flex;
   align-items: center;
   gap: 13px;

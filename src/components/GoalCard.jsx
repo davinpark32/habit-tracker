@@ -3,6 +3,8 @@ import { CATEGORY_BY_ID } from '../goalCatalog'
 
 const HOLD_MS = 1440
 const REWIND_MS = 280
+const ARM_MS = 160
+const SLOP_PX = 12
 
 function easeIn(t) {
   return t * t
@@ -18,10 +20,15 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
   const mode = useRef('idle')
   const holdingRef = useRef(false)
   const doneRef = useRef(false)
+  const pendingTimer = useRef(0)
+  const origin = useRef({ x: 0, y: 0 })
+  const pointerId = useRef(null)
+  const cardRef = useRef(null)
   const category = CATEGORY_BY_ID[goal.category] ?? CATEGORY_BY_ID.life
 
   useEffect(() => () => {
     cancelAnimationFrame(frame.current)
+    window.clearTimeout(pendingTimer.current)
   }, [])
 
   function setBar(value) {
@@ -29,10 +36,16 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
     setProgress(value)
   }
 
+  function clearPending() {
+    window.clearTimeout(pendingTimer.current)
+    pendingTimer.current = 0
+  }
+
   function finish() {
     if (doneRef.current) return
     doneRef.current = true
     cancelAnimationFrame(frame.current)
+    clearPending()
     holdingRef.current = false
     mode.current = 'idle'
     setHolding(false)
@@ -41,15 +54,16 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
 
   function rewind() {
     cancelAnimationFrame(frame.current)
+    clearPending()
     holdingRef.current = false
     setHolding(false)
     setArmed(false)
     mode.current = 'rewind'
     const from = progressRef.current
-    const origin = performance.now()
+    const originTime = performance.now()
     function step(now) {
       if (mode.current !== 'rewind') return
-      const t = Math.min(1, (now - origin) / REWIND_MS)
+      const t = Math.min(1, (now - originTime) / REWIND_MS)
       setBar(from * (1 - t) * (1 - t))
       if (t < 1) frame.current = requestAnimationFrame(step)
       else {
@@ -77,27 +91,59 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
     frame.current = requestAnimationFrame(tick)
   }
 
-  function begin(event) {
-    if (locked || goal.completed) return
-    event.preventDefault()
-    cancelAnimationFrame(frame.current)
-    doneRef.current = false
+  function startHold() {
+    if (mode.current !== 'pending') return
     mode.current = 'hold'
     holdingRef.current = true
+    doneRef.current = false
     setArmed(false)
     setHolding(true)
     start.current = performance.now()
-    event.currentTarget.setPointerCapture?.(event.pointerId)
+    if (pointerId.current != null) cardRef.current?.setPointerCapture?.(pointerId.current)
     frame.current = requestAnimationFrame(tick)
   }
 
+  function begin(event) {
+    if (locked || goal.completed) return
+    if (event.button != null && event.button !== 0) return
+    clearPending()
+    cancelAnimationFrame(frame.current)
+    doneRef.current = false
+    mode.current = 'pending'
+    pointerId.current = event.pointerId
+    origin.current = { x: event.clientX, y: event.clientY }
+    setArmed(false)
+    pendingTimer.current = window.setTimeout(startHold, ARM_MS)
+  }
+
+  function onMove(event) {
+    if (mode.current !== 'pending') return
+    const dx = event.clientX - origin.current.x
+    const dy = event.clientY - origin.current.y
+    if (dx * dx + dy * dy > SLOP_PX * SLOP_PX) {
+      clearPending()
+      mode.current = 'scroll'
+    }
+  }
+
   function onUp() {
+    clearPending()
     if (mode.current === 'armed') finish()
     else if (holdingRef.current && mode.current === 'hold') rewind()
+    else mode.current = 'idle'
   }
 
   function onLeave() {
-    if (holdingRef.current && mode.current === 'hold') rewind()
+    if (mode.current === 'pending') {
+      clearPending()
+      mode.current = 'idle'
+    } else if (holdingRef.current && mode.current === 'hold') rewind()
+  }
+
+  function onCancel() {
+    clearPending()
+    if (holdingRef.current && (mode.current === 'hold' || mode.current === 'armed')) rewind()
+    else mode.current = 'idle'
   }
 
   function onClick(event) {
@@ -119,11 +165,13 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
   return (
     <div className={`goal-card-shell ${locked ? 'missed' : ''}`}>
       <button
+        ref={cardRef}
         className={`goal-card ${holding ? 'holding' : ''} ${armed ? 'committed' : ''} ${busy ? 'busy' : ''}`}
         onPointerDown={begin}
+        onPointerMove={onMove}
         onPointerUp={onUp}
         onPointerLeave={onLeave}
-        onPointerCancel={onUp}
+        onPointerCancel={onCancel}
         onClick={onClick}
         onContextMenu={(event) => event.preventDefault()}
       >
