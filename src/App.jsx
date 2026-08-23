@@ -22,6 +22,7 @@ function Phone() {
   const [date, setDate] = useState(todayKey())
   const [completing, setCompleting] = useState(null)
   const [editingGoal, setEditingGoal] = useState(null)
+  const [returnAfterCreate, setReturnAfterCreate] = useState({ tab: 'today', view: 'main' })
 
   const finishComplete = useCallback(() => setCompleting(null), [])
 
@@ -30,14 +31,16 @@ function Phone() {
     setView('list')
   }
 
-  function openCreate(initialDate = todayKey()) {
+  function openCreate(initialDate = todayKey(), returnTo = { tab: 'today', view: 'main' }) {
     setDate(initialDate)
     setEditingGoal(null)
+    setReturnAfterCreate(returnTo)
     setView('create')
   }
 
   function openEdit(goal) {
     setEditingGoal(goal)
+    setReturnAfterCreate({ tab: 'calendar', view: 'list' })
     setView('create')
   }
 
@@ -45,10 +48,16 @@ function Phone() {
     <div className="stage">
       <div className="phone">
         {view === 'main' && tab === 'today' && (
-          <Home onComplete={setCompleting} onAdd={openCreate} />
+          <Home
+            onComplete={setCompleting}
+            onAdd={() => openCreate(todayKey(), { tab: 'today', view: 'main' })}
+          />
         )}
         {view === 'main' && tab === 'calendar' && (
-          <Calendar onSelectDate={openDate} onAdd={() => openCreate(todayKey())} />
+          <Calendar
+            onSelectDate={openDate}
+            onAdd={() => openCreate(date, { tab: 'calendar', view: 'main' })}
+          />
         )}
         {view === 'main' && tab === 'pet' && <PetScreen />}
         {view === 'list' && (
@@ -57,7 +66,7 @@ function Phone() {
             onBack={() => setView('main')}
             onComplete={setCompleting}
             onEdit={openEdit}
-            onAdd={openCreate}
+            onAdd={(targetDate) => openCreate(targetDate, { tab: 'calendar', view: 'list' })}
           />
         )}
         {view === 'create' && (
@@ -65,11 +74,12 @@ function Phone() {
             key={editingGoal?.id ?? `new-${date}`}
             editingGoal={editingGoal}
             initialDate={date}
-            onBack={() => setView('main')}
+            onBack={() => setView(returnAfterCreate.view === 'list' ? 'list' : 'main')}
             onSaved={(savedDate) => {
               setDate(savedDate)
-              setTab('calendar')
-              setView('list')
+              setEditingGoal(null)
+              setTab(returnAfterCreate.tab)
+              setView(returnAfterCreate.view)
             }}
           />
         )}
