@@ -5,15 +5,20 @@ const HOLD_MS = 1440
 const REWIND_MS = 280
 const ARM_MS = 160
 const SLOP_PX = 12
+const SWIPE_OPEN = 64
+const SWIPE_MAX = 88
 
 function easeIn(t) {
   return t * t
 }
 
-export default function GoalCard({ goal, locked = false, onComplete, onUndo, onEdit }) {
+export default function GoalCard({ goal, locked = false, onComplete, onUndo, onEdit, onTap, onDelete }) {
   const [progress, setProgress] = useState(0)
   const [holding, setHolding] = useState(false)
   const [armed, setArmed] = useState(false)
+  const [offset, setOffset] = useState(0)
+  const [swiping, setSwiping] = useState(false)
+  const [deleteMenu, setDeleteMenu] = useState(false)
   const frame = useRef(0)
   const start = useRef(0)
   const progressRef = useRef(0)
@@ -24,6 +29,8 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
   const origin = useRef({ x: 0, y: 0 })
   const pointerId = useRef(null)
   const cardRef = useRef(null)
+  const moved = useRef(false)
+  const offsetRef = useRef(0)
   const category = CATEGORY_BY_ID[goal.category] ?? CATEGORY_BY_ID.life
 
   useEffect(() => () => {
@@ -104,22 +111,42 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
   }
 
   function begin(event) {
-    if (locked || goal.completed) return
+    if (locked) return
     if (event.button != null && event.button !== 0) return
     clearPending()
     cancelAnimationFrame(frame.current)
     doneRef.current = false
-    mode.current = 'pending'
+    moved.current = false
     pointerId.current = event.pointerId
     origin.current = { x: event.clientX, y: event.clientY }
     setArmed(false)
+    if (goal.completed) {
+      mode.current = 'idle'
+      return
+    }
+    mode.current = 'pending'
     pendingTimer.current = window.setTimeout(startHold, ARM_MS)
   }
 
   function onMove(event) {
-    if (mode.current !== 'pending') return
     const dx = event.clientX - origin.current.x
     const dy = event.clientY - origin.current.y
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) moved.current = true
+
+    if (onDelete && !holdingRef.current && mode.current !== 'hold' && mode.current !== 'armed') {
+      if (Math.abs(dx) > Math.abs(dy) && dx < 0 && (mode.current === 'pending' || mode.current === 'idle' || mode.current === 'swipe')) {
+        clearPending()
+        mode.current = 'swipe'
+        setSwiping(true)
+        const next = Math.max(-SWIPE_MAX, dx)
+        offsetRef.current = next
+        setOffset(next)
+        event.preventDefault()
+        return
+      }
+    }
+
+    if (mode.current !== 'pending') return
     if (dx * dx + dy * dy > SLOP_PX * SLOP_PX) {
       clearPending()
       mode.current = 'scroll'
@@ -128,9 +155,20 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
 
   function onUp() {
     clearPending()
+    if (mode.current === 'swipe' || swiping) {
+      const open = offsetRef.current <= -SWIPE_OPEN
+      offsetRef.current = open ? -SWIPE_MAX : 0
+      setOffset(offsetRef.current)
+      setSwiping(false)
+      mode.current = 'idle'
+      return
+    }
     if (mode.current === 'armed') finish()
     else if (holdingRef.current && mode.current === 'hold') rewind()
-    else mode.current = 'idle'
+    else {
+      mode.current = 'idle'
+      if (!moved.current && !goal.completed) onTap?.()
+    }
   }
 
   function onLeave() {
@@ -153,36 +191,69 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
     }
   }
 
-  if (goal.completed) return (
-    <button className="goal-card completed" onClick={onUndo}>
+  function requestDelete() {
+    if (goal.repeatDays?.length || goal.startDate !== goal.endDate) {
+      setDeleteMenu(true)
+      return
+    }
+    if (window.confirm('이 목표를 삭제할까요?')) onDelete?.('all')
+    offsetRef.current = 0
+    setOffset(0)
+  }
+
+  function confirmDelete(scope) {
+    onDelete?.(scope)
+    setDeleteMenu(false)
+    offsetRef.current = 0
+    setOffset(0)
+  }
+
+  const busy = holding || armed || progress > 0.02
+  const card = goal.completed ? (
+    <button className="goal-card completed" onClick={(event) => { if (moved.current || offsetRef.current < 0) { event.preventDefault(); return } onUndo() }} onPointerDown={begin} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onCancel} onContextMenu={(event) => event.preventDefault()}>
       <span className="category-icon">{category.icon}</span>
       <span className="goal-copy"><span className="goal-title">{goal.title}</span><span className="hold-hint">✓ 완료 · 탭하여 완료 취소</span></span>
     </button>
+  ) : (
+    <button
+      ref={cardRef}
+      className={`goal-card ${holding ? 'holding' : ''} ${armed ? 'committed' : ''} ${busy ? 'busy' : ''}`}
+      onPointerDown={begin}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+      onPointerLeave={onLeave}
+      onPointerCancel={onCancel}
+      onClick={onClick}
+      onContextMenu={(event) => event.preventDefault()}
+    >
+      <span className="fill" style={{ transform: `scaleX(${progress})` }} />
+      <span className="category-icon">{category.icon}</span>
+      <span className="goal-copy">
+        <span className="goal-title">{goal.title}</span>
+        <span className="hold-hint">{locked ? '지나간 기록' : '길게 눌러 완료'}</span>
+      </span>
+    </button>
   )
 
-  const busy = holding || armed || progress > 0.02
-
   return (
-    <div className={`goal-card-shell ${locked ? 'missed' : ''}`}>
-      <button
-        ref={cardRef}
-        className={`goal-card ${holding ? 'holding' : ''} ${armed ? 'committed' : ''} ${busy ? 'busy' : ''}`}
-        onPointerDown={begin}
-        onPointerMove={onMove}
-        onPointerUp={onUp}
-        onPointerLeave={onLeave}
-        onPointerCancel={onCancel}
-        onClick={onClick}
-        onContextMenu={(event) => event.preventDefault()}
-      >
-        <span className="fill" style={{ transform: `scaleX(${progress})` }} />
-        <span className="category-icon">{category.icon}</span>
-        <span className="goal-copy">
-          <span className="goal-title">{goal.title}</span>
-          <span className="hold-hint">{locked ? '지나간 기록' : '길게 눌러 완료'}</span>
-        </span>
-      </button>
-      {onEdit && <button className="edit-goal" onClick={onEdit} aria-label={`${goal.title} 편집`}>✎</button>}
-    </div>
+    <>
+      <div className={`swipe-shell goal-card-shell ${locked ? 'missed' : ''}`}>
+        {onDelete && <button className="swipe-delete" onClick={requestDelete}>삭제</button>}
+        <div className={`swipe-card ${swiping ? 'swiping' : ''}`} style={{ transform: `translateX(${offset}px)` }}>
+          {card}
+          {onEdit && <button className="edit-goal" onClick={onEdit} aria-label={`${goal.title} 편집`}>✎</button>}
+        </div>
+      </div>
+      {deleteMenu && (
+        <div className="delete-sheet-backdrop" onClick={() => setDeleteMenu(false)}>
+          <div className="delete-sheet" onClick={(event) => event.stopPropagation()}>
+            <p>반복 목표를 어떻게 삭제할까요?</p>
+            <button onClick={() => confirmDelete('today')}>오늘만 삭제</button>
+            <button className="danger" onClick={() => confirmDelete('all')}>전체 반복 목표 삭제</button>
+            <button className="cancel" onClick={() => setDeleteMenu(false)}>취소</button>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

@@ -58,6 +58,7 @@ function loadState() {
 }
 
 function occursOn(goal, date) {
+  if (goal.excludedDates?.[date]) return false
   if (date < goal.startDate || date > goal.endDate) return false
   if (!goal.repeatDays?.length) return true
   return goal.repeatDays.includes(parseDateKey(date).getDay())
@@ -98,6 +99,7 @@ export function StoreProvider({ children }) {
       id: crypto.randomUUID(), title: input.title.trim(), startDate: input.startDate,
       endDate: input.endDate || input.startDate, repeatDays: input.repeatDays || [], category: input.category,
       completions: {}, rewardedDates: {},
+      excludedDates: {},
     }] }))
   }, [])
 
@@ -106,6 +108,17 @@ export function StoreProvider({ children }) {
       ...goal, title: input.title.trim(), startDate: input.startDate,
       endDate: input.endDate || input.startDate, repeatDays: input.repeatDays || [], category: input.category,
     } : goal) }))
+  }, [])
+
+  const removeGoal = useCallback((id, date, scope = 'all') => {
+    setState((prev) => {
+      if (scope === 'today') {
+        return { ...prev, goals: prev.goals.map((goal) => goal.id === id
+          ? { ...goal, excludedDates: { ...goal.excludedDates, [date]: true } }
+          : goal) }
+      }
+      return { ...prev, goals: prev.goals.filter((goal) => goal.id !== id) }
+    })
   }, [])
 
   const completeGoal = useCallback((id, date) => {
@@ -143,7 +156,12 @@ export function StoreProvider({ children }) {
       if (!candy) return prev
       return {
         ...prev, candies: prev.candies.filter((item) => item.id !== id),
-        pet: { fedCount: prev.pet.fedCount + 1, stats: { ...prev.pet.stats, [candy.stat]: prev.pet.stats[candy.stat] + 1 } },
+        pet: {
+          ...prev.pet,
+          fedCount: prev.pet.fedCount + 1,
+          stats: { ...prev.pet.stats, [candy.stat]: (prev.pet.stats[candy.stat] || 0) + 10 },
+          feedHistory: [...(prev.pet.feedHistory || []), { stat: candy.stat, xp: 10, at: Date.now() }].slice(-50),
+        },
       }
     })
   }, [])
@@ -171,7 +189,7 @@ export function StoreProvider({ children }) {
   const growthStage = Math.min(5, Math.floor(state.pet.fedCount / 5))
   const value = {
     today, goals: state.goals, candies: state.candies, pet: state.pet, growthStage, streak,
-    goalsOn, addGoal, updateGoal, completeGoal, undoGoal, feedCandy, monthMarks,
+    goalsOn, addGoal, updateGoal, removeGoal, completeGoal, undoGoal, feedCandy, monthMarks,
     dayClearSeen: state.dayClearSeen, markDayClearSeen, restoreSamples,
     isPast: (date) => date < today,
     isDayComplete: (date) => statusOf(goalsOn(date)) === 'done',

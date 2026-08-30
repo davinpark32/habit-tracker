@@ -7,6 +7,7 @@ import Home from './components/Home'
 import PetScreen from './components/PetScreen'
 import TabBar from './components/TabBar'
 import { StoreProvider, todayKey } from './store'
+import './improvements.css'
 
 export default function App() {
   return (
@@ -51,6 +52,7 @@ function Phone() {
           <Home
             onComplete={setCompleting}
             onAdd={() => openCreate(todayKey(), { tab: 'today', view: 'main' })}
+            onOpenDate={() => openDate(todayKey())}
           />
         )}
         {view === 'main' && tab === 'calendar' && (
