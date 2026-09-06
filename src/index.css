@@ -250,6 +250,7 @@ button { cursor: pointer; }
 }
 
 .tab {
+  position: relative;
   border: 0;
   background: transparent;
   height: 44px;
@@ -261,6 +262,24 @@ button { cursor: pointer; }
 .tab.active {
   background: #fff1e8;
   color: var(--coral);
+}
+
+.tab-badge {
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #e4453a;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px #fff;
 }
 
 .calendar-head {
@@ -453,13 +472,19 @@ button { cursor: pointer; }
   transition: transform 0.12s ease, background 0.2s ease, box-shadow 0.12s ease;
 }
 
-.goal-card.holding {
+.swipe-shell {
+  transition: transform 0.12s ease;
+}
+
+.swipe-shell.pressing {
   transform: scale(0.97);
+}
+
+.goal-card.holding {
   box-shadow: inset 0 0 0 2px #ffb48a, var(--shadow);
 }
 
 .goal-card.committed {
-  transform: scale(0.97);
   background: #effaf6;
   box-shadow: inset 0 0 0 3px var(--mint), var(--shadow);
 }
@@ -489,7 +514,25 @@ button { cursor: pointer; }
 .goal-card.completed .goal-title { color: var(--muted); text-decoration: line-through; }
 .category-icon { position: relative; z-index: 1; width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 14px; background: #fff6ee; font-size: 21px; transition: transform 0.16s ease, background 0.16s ease; }
 .goal-copy { position: relative; z-index: 1; display: block; min-width: 0; }
-.edit-goal { position: absolute; z-index: 2; top: 8px; right: 8px; border: 0; background: transparent; color: var(--muted); font-size: 18px; padding: 8px; }
+.goal-card.has-edit { padding-right: 64px; }
+.edit-goal {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 14px;
+  background: #fff6ee;
+  color: #3f342c;
+  font-size: 22px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
 
 .fill {
   position: absolute;
@@ -644,6 +687,13 @@ button { cursor: pointer; }
   margin-bottom: 8px;
 }
 
+.pet {
+  touch-action: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .pet svg {
   display: block;
   overflow: visible;
@@ -664,9 +714,49 @@ button { cursor: pointer; }
   animation: bounce 0.55s ease;
 }
 
-.pet-happy .pet-eye {
-  animation: none;
-  transform: scaleY(0.42);
+.pet-eyes-happy,
+.pet-eyes-closed {
+  display: none;
+}
+
+.pet-happy .pet-eyes-idle {
+  display: none;
+}
+
+.pet-happy .pet-eyes-happy,
+.pet-stroke .pet-eyes-closed {
+  display: inline;
+}
+
+.pet-stroke .pet-eyes-idle,
+.pet-stroke .pet-eyes-happy {
+  display: none;
+}
+
+.pet-stroke .pet-body {
+  animation: pet-stroke-sway 0.7s ease-in-out infinite;
+}
+
+.pet-boop,
+.pet-happy.pet-boop {
+  animation: pet-boop 1s ease;
+}
+
+@keyframes pet-boop {
+  0% { transform: translateY(0) scale(1, 1); }
+  8% { transform: translateY(6px) scale(1.12, 0.86); }
+  22% { transform: translateY(-24px) scale(0.92, 1.12); }
+  36% { transform: translateY(6px) scale(1.1, 0.88); }
+  50% { transform: translateY(-22px) scale(0.93, 1.1); }
+  64% { transform: translateY(4px) scale(1.06, 0.94); }
+  78% { transform: translateY(1px) scale(1.02, 0.98); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+@keyframes pet-stroke-sway {
+  0%,
+  100% { transform: rotate(-4deg) translateY(2px); }
+  50% { transform: rotate(4deg) translateY(0); }
 }
 
 @keyframes pet-breath {

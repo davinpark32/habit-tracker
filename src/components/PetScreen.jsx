@@ -58,7 +58,7 @@ export default function PetScreen() {
         </div>
       </header>
       <div className={`pet-drop ${dragging ? 'ready' : ''}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); feed(event.dataTransfer.getData('text/plain') || dragging) }}>
-        <Pet size={190} grown={growthStage} mood={happy ? 'happy' : 'idle'} />
+        <Pet size={190} grown={growthStage} mood={happy ? 'happy' : 'idle'} stroke="full" />
         {happy && <div className="speech">맛있어! ✦</div>}
         <p>성장 단계 {growthStage + 1} · 먹은 사탕 {pet.fedCount}개</p>
         <small>사탕을 파를레에게 드래그해 주세요</small>

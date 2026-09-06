@@ -1,3 +1,5 @@
+import { useStore } from '../store'
+
 const TABS = [
   { id: 'today', label: '오늘' },
   { id: 'calendar', label: '캘린더' },
@@ -5,6 +7,9 @@ const TABS = [
 ]
 
 export default function TabBar({ tab, onChange }) {
+  const { candies } = useStore()
+  const candyCount = candies.length
+
   return (
     <nav className="tabbar">
       {TABS.map((item) => (
@@ -12,8 +17,12 @@ export default function TabBar({ tab, onChange }) {
           key={item.id}
           className={tab === item.id ? 'tab active' : 'tab'}
           onClick={() => onChange(item.id)}
+          aria-label={item.id === 'pet' && candyCount > 0 ? `${item.label}, 사탕 ${candyCount}개` : item.label}
         >
           {item.label}
+          {item.id === 'pet' && candyCount > 0 && (
+            <span className="tab-badge" aria-hidden="true">{candyCount > 9 ? '9+' : candyCount}</span>
+          )}
         </button>
       ))}
     </nav>

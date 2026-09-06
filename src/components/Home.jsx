@@ -13,7 +13,7 @@ export default function Home({ onComplete, onAdd, onOpenDate }) {
     <section className={stickyHome ? 'screen sticky-home' : 'screen'}>
       <div className="home-pin">
         <header className="topbar"><h1>오늘</h1><span className="spacer" /></header>
-        <div className="hero home-hero"><Pet size={145} grown={growthStage} /><p className="streak">🔥 연속 달성 {streak}일</p></div>
+        <div className="hero home-hero"><Pet size={145} grown={growthStage} stroke="short" /><p className="streak">🔥 연속 달성 {streak}일</p></div>
         <div className="list-heading"><h2 className="list-title">오늘의 목표</h2><span>{goals.filter((goal) => goal.completed).length}/{goals.length}</span></div>
       </div>
       <div className="home-scroll">

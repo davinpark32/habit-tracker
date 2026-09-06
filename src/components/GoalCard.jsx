@@ -31,6 +31,7 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
   const cardRef = useRef(null)
   const moved = useRef(false)
   const offsetRef = useRef(0)
+  const swipeFrom = useRef(0)
   const category = CATEGORY_BY_ID[goal.category] ?? CATEGORY_BY_ID.life
 
   useEffect(() => () => {
@@ -119,13 +120,41 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
     moved.current = false
     pointerId.current = event.pointerId
     origin.current = { x: event.clientX, y: event.clientY }
+    swipeFrom.current = offsetRef.current
     setArmed(false)
-    if (goal.completed) {
+    if (goal.completed || offsetRef.current < 0) {
       mode.current = 'idle'
       return
     }
     mode.current = 'pending'
     pendingTimer.current = window.setTimeout(startHold, ARM_MS)
+  }
+
+  function capturePointer(event) {
+    try {
+      event.currentTarget.setPointerCapture?.(event.pointerId)
+    } catch {
+      /* Safari may reject capture on synthetic pointers */
+    }
+  }
+
+  function moveSwipe(event, dx) {
+    clearPending()
+    mode.current = 'swipe'
+    setSwiping(true)
+    capturePointer(event)
+    const next = Math.max(-SWIPE_MAX, Math.min(0, swipeFrom.current + dx))
+    offsetRef.current = next
+    setOffset(next)
+    event.preventDefault()
+  }
+
+  function endSwipe() {
+    const open = offsetRef.current <= -SWIPE_OPEN
+    offsetRef.current = open ? -SWIPE_MAX : 0
+    setOffset(offsetRef.current)
+    setSwiping(false)
+    mode.current = 'idle'
   }
 
   function onMove(event) {
@@ -134,14 +163,12 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
     if (Math.abs(dx) > 8 || Math.abs(dy) > 8) moved.current = true
 
     if (onDelete && !holdingRef.current && mode.current !== 'hold' && mode.current !== 'armed') {
-      if (Math.abs(dx) > Math.abs(dy) && dx < 0 && (mode.current === 'pending' || mode.current === 'idle' || mode.current === 'swipe')) {
-        clearPending()
-        mode.current = 'swipe'
-        setSwiping(true)
-        const next = Math.max(-SWIPE_MAX, dx)
-        offsetRef.current = next
-        setOffset(next)
-        event.preventDefault()
+      const canSwipe = mode.current === 'pending' || mode.current === 'idle' || mode.current === 'swipe'
+      const horizontal = Math.abs(dx) > Math.abs(dy)
+      const startLeft = dx < -8
+      const closeOpen = swipeFrom.current < 0 && Math.abs(dx) > 8
+      if (canSwipe && (mode.current === 'swipe' || (horizontal && (startLeft || closeOpen)))) {
+        moveSwipe(event, dx)
         return
       }
     }
@@ -156,10 +183,12 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
   function onUp() {
     clearPending()
     if (mode.current === 'swipe' || swiping) {
-      const open = offsetRef.current <= -SWIPE_OPEN
-      offsetRef.current = open ? -SWIPE_MAX : 0
-      setOffset(offsetRef.current)
-      setSwiping(false)
+      endSwipe()
+      return
+    }
+    if (offsetRef.current < 0 && !moved.current) {
+      offsetRef.current = 0
+      setOffset(0)
       mode.current = 'idle'
       return
     }
@@ -172,6 +201,7 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
   }
 
   function onLeave() {
+    if (mode.current === 'swipe' || swiping) return
     if (mode.current === 'pending') {
       clearPending()
       mode.current = 'idle'
@@ -180,6 +210,10 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
 
   function onCancel() {
     clearPending()
+    if (mode.current === 'swipe' || swiping) {
+      endSwipe()
+      return
+    }
     if (holdingRef.current && (mode.current === 'hold' || mode.current === 'armed')) rewind()
     else mode.current = 'idle'
   }
@@ -209,15 +243,16 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
   }
 
   const busy = holding || armed || progress > 0.02
+  const cardClass = `goal-card ${holding ? 'holding' : ''} ${armed ? 'committed' : ''} ${busy ? 'busy' : ''}${onEdit ? ' has-edit' : ''}`
   const card = goal.completed ? (
-    <button className="goal-card completed" onClick={(event) => { if (moved.current || offsetRef.current < 0) { event.preventDefault(); return } onUndo() }} onPointerDown={begin} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onCancel} onContextMenu={(event) => event.preventDefault()}>
+    <button className={`goal-card completed${onEdit ? ' has-edit' : ''}`} onClick={(event) => { if (moved.current || offsetRef.current < 0) { event.preventDefault(); return } onUndo() }} onPointerDown={begin} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onCancel} onContextMenu={(event) => event.preventDefault()}>
       <span className="category-icon">{category.icon}</span>
       <span className="goal-copy"><span className="goal-title">{goal.title}</span><span className="hold-hint">✓ 완료 · 탭하여 완료 취소</span></span>
     </button>
   ) : (
     <button
       ref={cardRef}
-      className={`goal-card ${holding ? 'holding' : ''} ${armed ? 'committed' : ''} ${busy ? 'busy' : ''}`}
+      className={cardClass}
       onPointerDown={begin}
       onPointerMove={onMove}
       onPointerUp={onUp}
@@ -237,11 +272,11 @@ export default function GoalCard({ goal, locked = false, onComplete, onUndo, onE
 
   return (
     <>
-      <div className={`swipe-shell goal-card-shell ${locked ? 'missed' : ''}`}>
+      <div className={`swipe-shell goal-card-shell ${locked ? 'missed' : ''} ${holding || armed ? 'pressing' : ''}`}>
         {onDelete && <button className="swipe-delete" onClick={requestDelete}>삭제</button>}
-        <div className={`swipe-card ${swiping ? 'swiping' : ''}`} style={{ transform: `translateX(${offset}px)` }}>
+        <div className={`swipe-card ${swiping ? 'swiping' : ''}${offset < 0 ? ' is-open' : ''}`} style={{ transform: `translateX(${offset}px)` }}>
           {card}
-          {onEdit && <button className="edit-goal" onClick={onEdit} aria-label={`${goal.title} 편집`}>✎</button>}
+          {onEdit && <button className="edit-goal" onClick={(event) => { event.stopPropagation(); onEdit() }} aria-label={`${goal.title} 편집`}>✎</button>}
         </div>
       </div>
       {deleteMenu && (
