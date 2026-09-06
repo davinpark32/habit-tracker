@@ -1,12 +1,21 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
-export default function Pet({ size = 140, mood = 'idle', grown = 0 }) {
+const BOOP_MS = 1000
+const STROKE_START = 18
+
+export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'short' }) {
   const wrapRef = useRef(null)
   const bodyLookRef = useRef(null)
   const faceRef = useRef(null)
   const look = useRef({ x: 0, y: 0 })
   const target = useRef({ x: 0, y: 0 })
   const lastPointer = useRef(0)
+  const tapOrigin = useRef(null)
+  const didStroke = useRef(false)
+  const boopTimer = useRef(0)
+  const strokeTimer = useRef(0)
+  const [boop, setBoop] = useState(false)
+  const [stroking, setStroking] = useState(false)
   const uid = useId().replace(/:/g, '')
 
   useEffect(() => {
@@ -42,8 +51,82 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0 }) {
       running = false
       cancelAnimationFrame(frame)
       window.removeEventListener('pointermove', onPointerMove)
+      window.clearTimeout(boopTimer.current)
+      window.clearTimeout(strokeTimer.current)
     }
   }, [])
+
+  function playBoop() {
+    setStroking(false)
+    setBoop(false)
+    window.requestAnimationFrame(() => {
+      setBoop(true)
+      window.clearTimeout(boopTimer.current)
+      boopTimer.current = window.setTimeout(() => setBoop(false), BOOP_MS)
+    })
+    navigator.vibrate?.(12)
+  }
+
+  function beginStroke() {
+    if (didStroke.current) return
+    didStroke.current = true
+    setBoop(false)
+    setStroking(true)
+    navigator.vibrate?.(8)
+    if (stroke === 'short') {
+      window.clearTimeout(strokeTimer.current)
+      strokeTimer.current = window.setTimeout(() => setStroking(false), 560)
+    }
+  }
+
+  function onPointerDown(event) {
+    if (event.button != null && event.button !== 0) return
+    tapOrigin.current = { x: event.clientX, y: event.clientY }
+    didStroke.current = false
+    try {
+      event.currentTarget.setPointerCapture?.(event.pointerId)
+    } catch {
+      /* synthetic pointers may not support capture */
+    }
+  }
+
+  function onPetMove(event) {
+    const origin = tapOrigin.current
+    if (!origin) return
+    const dx = event.clientX - origin.x
+    const dy = event.clientY - origin.y
+    if (dx * dx + dy * dy > STROKE_START * STROKE_START) beginStroke()
+  }
+
+  function onPointerUp() {
+    const origin = tapOrigin.current
+    const stroked = didStroke.current
+    tapOrigin.current = null
+    didStroke.current = false
+    if (stroked) {
+      const linger = stroke === 'full' ? 480 : 200
+      window.clearTimeout(strokeTimer.current)
+      strokeTimer.current = window.setTimeout(() => setStroking(false), linger)
+      return
+    }
+    if (!origin) return
+    playBoop()
+  }
+
+  function onPointerCancel() {
+    tapOrigin.current = null
+    didStroke.current = false
+    setStroking(false)
+  }
+
+  function onKeyDown(event) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      playBoop()
+    }
+  }
+
+  const happy = (mood === 'happy' || boop) && !stroking
 
   const scale = 1 + grown * 0.08
   const bodyFilter = `url(#pastel-body-${uid})`
@@ -52,9 +135,16 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0 }) {
   return (
     <div
       ref={wrapRef}
-      className={`pet pet-${mood}`}
+      className={`pet pet-${happy ? 'happy' : 'idle'}${boop ? ' pet-boop' : ''}${stroking ? ' pet-stroke' : ''}`}
       style={{ width: size, height: size * 1.12 }}
-      aria-label="파를레"
+      role="button"
+      tabIndex={0}
+      aria-label="파를레, 톡하거나 쓰다듬어 주세요"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPetMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
+      onKeyDown={onKeyDown}
     >
       <svg viewBox="0 0 240 210" width="100%" height="100%" aria-hidden="true">
         <defs>
@@ -101,26 +191,64 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0 }) {
             </g>
           </g>
           <g ref={faceRef} className="pet-face">
-            <path
-              className="pet-eye"
-              fill="none"
-              stroke="#e8c247"
-              strokeWidth="7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              filter={eyeFilter}
-              d="M107.4 137.2 C106.1 146.8 99.2 154.6 91.2 155.4 C82.6 156.3 75.8 148.8 74.9 140.4 C74.1 131.6 80.2 123.4 88.8 122.6 C97.6 121.7 105.2 128.4 107.4 137.2 Z"
-            />
-            <path
-              className="pet-eye"
-              fill="none"
-              stroke="#e8c247"
-              strokeWidth="7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              filter={eyeFilter}
-              d="M167.2 136.4 C165.8 146.1 158.6 153.8 150.6 154.4 C142.2 155.1 135.6 147.4 134.8 138.8 C134.1 130.2 140.4 122.2 148.8 121.6 C157.6 120.9 165.2 127.4 167.2 136.4 Z"
-            />
+            <g className="pet-eyes-idle">
+              <path
+                className="pet-eye"
+                fill="none"
+                stroke="#e8c247"
+                strokeWidth="7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter={eyeFilter}
+                d="M107.4 137.2 C106.1 146.8 99.2 154.6 91.2 155.4 C82.6 156.3 75.8 148.8 74.9 140.4 C74.1 131.6 80.2 123.4 88.8 122.6 C97.6 121.7 105.2 128.4 107.4 137.2 Z"
+              />
+              <path
+                className="pet-eye"
+                fill="none"
+                stroke="#e8c247"
+                strokeWidth="7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter={eyeFilter}
+                d="M167.2 136.4 C165.8 146.1 158.6 153.8 150.6 154.4 C142.2 155.1 135.6 147.4 134.8 138.8 C134.1 130.2 140.4 122.2 148.8 121.6 C157.6 120.9 165.2 127.4 167.2 136.4 Z"
+              />
+            </g>
+            <g className="pet-eyes-happy">
+              <path
+                className="pet-eye-happy"
+                fill="none"
+                stroke="#e8c247"
+                strokeWidth="8"
+                strokeLinecap="round"
+                d="M75 147 C79 128 103 128 107 147"
+              />
+              <path
+                className="pet-eye-happy"
+                fill="none"
+                stroke="#e8c247"
+                strokeWidth="8"
+                strokeLinecap="round"
+                d="M134 146 C138 127 162 127 166 146"
+              />
+            </g>
+            <g className="pet-eyes-closed">
+              <path
+                className="pet-eye-closed"
+                fill="none"
+                stroke="#e8c247"
+                strokeWidth="7"
+                strokeLinecap="round"
+                d="M74 136 C83 152 99 152 108 136"
+              />
+              <path
+                className="pet-eye-closed"
+                fill="none"
+                stroke="#e8c247"
+                strokeWidth="8"
+                strokeLinecap="round"
+                d="M133 135 C142 151 158 151 167 135"
+              />
+            </g>
             <path fill="#4a4a4a" d="M120 147 L112 152 Q120 156 128 152 Z" />
           </g>
         </g>

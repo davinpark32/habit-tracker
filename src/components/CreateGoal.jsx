@@ -13,6 +13,7 @@ export default function CreateGoal({ editingGoal, initialDate, onBack, onSaved }
   const [repeatDays, setRepeatDays] = useState(editingGoal?.repeatDays ?? [])
   const suggestion = useMemo(() => suggestCategory(title), [title])
   const [selectedCategory, setSelectedCategory] = useState(editingGoal?.category ?? '')
+  const [showSamples, setShowSamples] = useState(!editingGoal)
   const category = selectedCategory || suggestion?.category || ''
   const selectedCatalog = CATEGORY_CATALOG.find((item) => item.id === category)
 
@@ -30,11 +31,11 @@ export default function CreateGoal({ editingGoal, initialDate, onBack, onSaved }
     <section className="screen create-screen">
       <header className="topbar"><button className="icon-btn" onClick={onBack} aria-label="뒤로">←</button><h1>{editingGoal ? '목표 편집' : '목표 추가'}</h1><span className="spacer" /></header>
       <form className="form" onSubmit={save}>
-        <label>목표 이름<input autoFocus value={title} onChange={(event) => { setTitle(event.target.value); setSelectedCategory('') }} placeholder="무엇을 해볼까요?" /></label>
+        <label>목표 이름<input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur() } }} enterKeyHint="done" placeholder="무엇을 해볼까요?" /></label>
         <div className="sample-block">
-          <span className="field-label">샘플에서 고르기</span>
-          <div className="category-tabs">{CATEGORY_CATALOG.map((item) => <button type="button" key={item.id} className={category === item.id ? 'category-chip active' : 'category-chip'} onClick={() => setSelectedCategory(item.id)}>{item.icon} {item.label}</button>)}</div>
-          {selectedCatalog && <div className="sample-grid">{selectedCatalog.samples.map((item) => <button type="button" key={item.title} onClick={() => chooseSample(item, selectedCatalog.id)}>{item.icon} {item.title}</button>)}</div>}
+          <div className="section-head"><span className="field-label">샘플에서 고르기</span><button type="button" className="sample-toggle" onClick={() => setShowSamples((value) => !value)}>{showSamples ? '접기' : '보기'}</button></div>
+          {showSamples && <><div className="category-tabs">{CATEGORY_CATALOG.map((item) => <button type="button" key={item.id} className={category === item.id ? 'category-chip active' : 'category-chip'} onClick={() => setSelectedCategory(item.id)}>{item.icon} {item.label}</button>)}</div>
+          {selectedCatalog && <div className="sample-grid">{selectedCatalog.samples.map((item) => <button type="button" key={item.title} onClick={() => { chooseSample(item, selectedCatalog.id); setShowSamples(false) }}>{item.icon} {item.title}</button>)}</div>}</>}
         </div>
         <label>활동 타입<select value={category} onChange={(event) => setSelectedCategory(event.target.value)}><option value="">직접 선택해 주세요</option>{CATEGORY_CATALOG.map((item) => <option key={item.id} value={item.id}>{item.icon} {item.label}</option>)}</select></label>
         {suggestion && !selectedCategory && <p className="suggestion">입력한 내용으로 “{CATEGORY_CATALOG.find((item) => item.id === suggestion.category)?.label}”을 추천했어요.</p>}
