@@ -49,23 +49,23 @@ export default function PetScreen() {
   }
 
   return (
-    <section className="screen pet-screen">
+    <section className="screen pet-screen pet-room">
       <header className="topbar">
-        <h1>포켓 파를레</h1>
+        <span className="spacer" />
         <div className="top-actions">
           <button className="pet-stat-btn" onClick={() => setView('stats')} aria-label="성장의 흔적">✦</button>
           <button className="text-btn danger" onClick={restore}>샘플 복원</button>
         </div>
       </header>
       <div className={`pet-drop ${dragging ? 'ready' : ''}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); feed(event.dataTransfer.getData('text/plain') || dragging) }}>
-        <Pet size={190} grown={growthStage} mood={happy ? 'happy' : 'idle'} stroke="full" />
+        <Pet size={210} grown={growthStage} mood={happy ? 'happy' : 'idle'} stroke="full" />
         {happy && <div className="speech">맛있어! ✦</div>}
-        <p>성장 단계 {growthStage + 1} · 먹은 사탕 {pet.fedCount}개</p>
-        <small>사탕을 파를레에게 드래그해 주세요</small>
+        <p className="pet-line">{recentGrowthText(pet.feedHistory)}</p>
       </div>
-      <section className="inventory">
-        <div className="section-head"><h2>사탕 보관함</h2><span>{candies.length}개</span></div>
-        {candies.length === 0 ? <p className="empty">목표를 완료하면 활동에 맞는 사탕이 생겨요.</p> : (
+      <section className={`candy-shelf ${candies.length ? 'open' : 'empty'}`} aria-label="사탕">
+        {candies.length === 0 ? (
+          <p className="shelf-empty">목표를 끝내면 사탕이 생겨요.</p>
+        ) : (
           <div className="candy-tray">
             {candies.map((candy) => (
               <button
@@ -86,7 +86,6 @@ export default function PetScreen() {
           </div>
         )}
         {dragPoint && <div className="drag-candy-ghost" style={{ left: dragPoint.x, top: dragPoint.y, background: dragPoint.color }}>{dragPoint.icon}</div>}
-        <p className="touch-note">사탕을 잡는 동안에는 화면 대신 사탕이 움직여요.</p>
       </section>
       <div className="tab-clear" aria-hidden="true" />
     </section>

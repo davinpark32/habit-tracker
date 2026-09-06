@@ -893,12 +893,57 @@ button { cursor: pointer; }
 }
 
 .pet-screen { padding-bottom: 24px; }
+.pet-screen.pet-room {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 8px;
+}
+.pet-room .pet-drop {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px 10px;
+}
+.pet-line {
+  max-width: 320px;
+  margin: 14px 0 0;
+  padding: 13px 16px;
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.5;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+.candy-shelf {
+  flex-shrink: 0;
+  margin: 0 2px 4px;
+  padding: 12px 10px 8px;
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+}
+.candy-shelf.open .candy-tray {
+  justify-content: center;
+}
+.shelf-empty {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
 .text-btn { border: 0; background: transparent; font-size: 12px; font-weight: 700; }
 .text-btn.danger { color: #c45b58; }
 .pet-drop { position: relative; display: grid; justify-items: center; padding: 6px 0 16px; border: 2px dashed transparent; border-radius: 28px; transition: .2s; }
 .pet-drop.ready { border-color: var(--coral); background: #fff1e8; }
 .pet-drop p { margin: -5px 0 4px; font-weight: 800; }
 .pet-drop small { color: var(--muted); }
+.pet-room .pet-drop p.pet-line { margin: 14px 0 0; font-weight: 700; }
 .speech { position: absolute; right: 18px; top: 20px; background: white; border-radius: 16px 16px 16px 4px; padding: 10px 12px; font-weight: 800; box-shadow: var(--shadow); animation: pop .25s ease; }
 .inventory, .stats-panel { background: white; border-radius: 22px; padding: 16px; margin-top: 12px; box-shadow: var(--shadow); }
 .inventory h2, .stats-panel h2 { margin: 0; font-size: 16px; }
