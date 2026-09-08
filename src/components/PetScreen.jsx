@@ -10,10 +10,11 @@ export default function PetScreen() {
   const [dragPoint, setDragPoint] = useState(null)
   const [view, setView] = useState('pet')
   const [selectedStat, setSelectedStat] = useState(null)
+  const [asleep, setAsleep] = useState(true)
 
   function feed(id) {
     if (!id) return
-    feedCandy(id); setDragging(null); setHappy(true); setTimeout(() => setHappy(false), 900)
+    feedCandy(id); setDragging(null); setHappy(true); setAsleep(false); setTimeout(() => setHappy(false), 900)
   }
   function restore() {
     if (window.confirm('목표, 완료 기록, 사탕과 펫 성장을 지우고 샘플 목표로 다시 시작할까요? 이 작업은 되돌릴 수 없어요.')) restoreSamples()
@@ -83,7 +84,7 @@ export default function PetScreen() {
         </div>
       </header>
       <div className={`pet-drop ${dragging ? 'ready' : ''}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); feed(event.dataTransfer.getData('text/plain') || dragging) }}>
-        <Pet size={210} grown={growthStage} mood={happy ? 'happy' : 'idle'} stroke="full" />
+        <Pet size={210} grown={growthStage} mood={happy ? 'happy' : 'idle'} stroke="full" asleep={asleep} onWake={() => setAsleep(false)} />
         {happy && <div className="speech">맛있어! ✦</div>}
         <p className="pet-line">{recentGrowthText(pet.feedHistory)}</p>
       </div>

@@ -820,6 +820,7 @@ button { cursor: pointer; }
 /* ===== Pet: character (used on Pet screen and complete overlay) ===== */
 
 .pet {
+  position: relative;
   touch-action: none;
   cursor: pointer;
   user-select: none;
@@ -867,6 +868,32 @@ button { cursor: pointer; }
 
 .pet-stroke .pet-body {
   animation: pet-stroke-sway 0.7s ease-in-out infinite;
+}
+
+.pet-asleep .pet-eyes-idle,
+.pet-asleep .pet-eyes-happy {
+  display: none;
+}
+
+.pet-asleep .pet-eyes-closed {
+  display: inline;
+}
+
+.pet-zzz {
+  position: absolute;
+  top: 24%;
+  right: 2%;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #93a3ab;
+  pointer-events: none;
+  animation: pet-zzz-float 2.2s ease-in-out infinite;
+}
+
+@keyframes pet-zzz-float {
+  0%, 100% { opacity: 0.35; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-8px); }
 }
 
 .pet-boop,

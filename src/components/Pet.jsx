@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 const BOOP_MS = 1000
 const STROKE_START = 18
 
-export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'short' }) {
+export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'short', asleep = false, onWake }) {
   const wrapRef = useRef(null)
   const bodyLookRef = useRef(null)
   const faceRef = useRef(null)
@@ -103,6 +103,7 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'sh
     const stroked = didStroke.current
     tapOrigin.current = null
     didStroke.current = false
+    if (asleep) onWake?.()
     if (stroked) {
       const linger = stroke === 'full' ? 480 : 200
       window.clearTimeout(strokeTimer.current)
@@ -135,17 +136,18 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'sh
   return (
     <div
       ref={wrapRef}
-      className={`pet pet-${happy ? 'happy' : 'idle'}${boop ? ' pet-boop' : ''}${stroking ? ' pet-stroke' : ''}`}
+      className={`pet pet-${happy ? 'happy' : 'idle'}${boop ? ' pet-boop' : ''}${stroking ? ' pet-stroke' : ''}${asleep ? ' pet-asleep' : ''}`}
       style={{ width: size, height: size * 1.12 }}
       role="button"
       tabIndex={0}
-      aria-label="파를레, 톡하거나 쓰다듬어 주세요"
+      aria-label={asleep ? '파를레, 잠들어 있어요. 톡해서 깨워주세요' : '파를레, 톡하거나 쓰다듬어 주세요'}
       onPointerDown={onPointerDown}
       onPointerMove={onPetMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerCancel}
       onKeyDown={onKeyDown}
     >
+      {asleep && <div className="pet-zzz" aria-hidden="true">Zzz</div>}
       <svg viewBox="0 0 240 210" width="100%" height="100%" aria-hidden="true">
         <defs>
           <filter id={`pastel-body-${uid}`} x="-12%" y="-12%" width="124%" height="124%" colorInterpolationFilters="sRGB">
