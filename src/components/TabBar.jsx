@@ -21,7 +21,7 @@ export default function TabBar({ tab, onChange }) {
         >
           {item.label}
           {item.id === 'pet' && candyCount > 0 && (
-            <span className="tab-badge" aria-hidden="true">{candyCount > 9 ? '9+' : candyCount}</span>
+            <span className="tab-badge" aria-hidden="true"><span>{candyCount > 9 ? '9+' : candyCount}</span></span>
           )}
         </button>
       ))}
