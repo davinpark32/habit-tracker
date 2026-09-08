@@ -984,6 +984,7 @@ button { cursor: pointer; }
   flex-shrink: 0;
   margin: 0 2px 4px;
   padding: 12px 10px 8px;
+  min-height: 111px;
   background: rgba(255, 255, 255, 0.94);
   border-radius: 22px;
   box-shadow: var(--shadow);
@@ -992,6 +993,10 @@ button { cursor: pointer; }
   justify-content: center;
 }
 .shelf-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
   text-align: center;
   color: var(--muted);
