@@ -50,6 +50,31 @@ export default function PetScreen() {
 
   return (
     <section className="screen pet-screen pet-room">
+      <div className="pet-scene" aria-hidden="true">
+        <svg className="pet-filters" aria-hidden="true">
+          <defs>
+            <filter id="hopit-crayon" x="-18%" y="-28%" width="136%" height="156%" colorInterpolationFilters="sRGB">
+              <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" seed="6" result="n" />
+              <feDisplacementMap in="SourceGraphic" in2="n" scale="4.5" xChannelSelector="R" yChannelSelector="G" result="rough" />
+              <feTurbulence type="fractalNoise" baseFrequency="1.55" numOctaves="3" seed="8" result="paper" />
+              <feColorMatrix in="paper" type="matrix" values="0 0 0 0 0.2  0 0 0 0 0.15  0 0 0 0 0.11  0 0 0 0.3 0" result="grain" />
+              <feComposite in="grain" in2="rough" operator="in" result="clippedGrain" />
+              <feBlend in="rough" in2="clippedGrain" mode="multiply" result="blended" />
+              <feComposite in="blended" in2="rough" operator="in" />
+            </filter>
+          </defs>
+        </svg>
+        <div className="pet-wall" />
+        <div className="pet-desk">
+          <svg className="pet-desk-edge" viewBox="0 0 400 18" preserveAspectRatio="none">
+            <path
+              filter="url(#hopit-crayon)"
+              fill="#e4d6c4"
+              d="M-6 5 C 22 1 44 8 68 4 S 116 9 140 5 S 188 1 212 6 S 260 11 284 4 S 332 0 356 6 S 392 10 406 3 V 16 H -6 Z"
+            />
+          </svg>
+        </div>
+      </div>
       <header className="topbar">
         <span className="spacer" />
         <div className="top-actions">
