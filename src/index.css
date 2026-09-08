@@ -696,91 +696,6 @@ button { cursor: pointer; }
   margin-bottom: 8px;
 }
 
-.pet {
-  touch-action: none;
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.pet svg {
-  display: block;
-  overflow: visible;
-}
-
-.pet-body {
-  transform-origin: 120px 188px;
-  animation: pet-breath 2.8s ease-in-out infinite;
-}
-
-.pet-eye {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: pet-blink 4.4s ease-in-out infinite;
-}
-
-.pet-happy {
-  animation: bounce 0.55s ease;
-}
-
-.pet-eyes-happy,
-.pet-eyes-closed {
-  display: none;
-}
-
-.pet-happy .pet-eyes-idle {
-  display: none;
-}
-
-.pet-happy .pet-eyes-happy,
-.pet-stroke .pet-eyes-closed {
-  display: inline;
-}
-
-.pet-stroke .pet-eyes-idle,
-.pet-stroke .pet-eyes-happy {
-  display: none;
-}
-
-.pet-stroke .pet-body {
-  animation: pet-stroke-sway 0.7s ease-in-out infinite;
-}
-
-.pet-boop,
-.pet-happy.pet-boop {
-  animation: pet-boop 1s ease;
-}
-
-@keyframes pet-boop {
-  0% { transform: translateY(0) scale(1, 1); }
-  8% { transform: translateY(6px) scale(1.12, 0.86); }
-  22% { transform: translateY(-24px) scale(0.92, 1.12); }
-  36% { transform: translateY(6px) scale(1.1, 0.88); }
-  50% { transform: translateY(-22px) scale(0.93, 1.1); }
-  64% { transform: translateY(4px) scale(1.06, 0.94); }
-  78% { transform: translateY(1px) scale(1.02, 0.98); }
-  100% { transform: translateY(0) scale(1, 1); }
-}
-
-@keyframes pet-stroke-sway {
-  0%,
-  100% { transform: rotate(-4deg) translateY(2px); }
-  50% { transform: rotate(4deg) translateY(0); }
-}
-
-@keyframes pet-breath {
-  0%,
-  100% { transform: translateY(0) scale(1, 1); }
-  50% { transform: translateY(1.5px) scale(1.025, 0.975); }
-}
-
-@keyframes pet-blink {
-  0%,
-  90%,
-  100% { transform: scaleY(1); }
-  93% { transform: scaleY(0.08); }
-}
-
 @keyframes pop {
   from {
     transform: scale(0.7);
@@ -901,6 +816,96 @@ button { cursor: pointer; }
   50% { opacity: 1; }
 }
 
+
+/* ===== Pet: character (used on Pet screen and complete overlay) ===== */
+
+.pet {
+  touch-action: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pet svg {
+  display: block;
+  overflow: visible;
+}
+
+.pet-body {
+  transform-origin: 120px 188px;
+  animation: pet-breath 2.8s ease-in-out infinite;
+}
+
+.pet-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pet-blink 4.4s ease-in-out infinite;
+}
+
+.pet-happy {
+  animation: bounce 0.55s ease;
+}
+
+.pet-eyes-happy,
+.pet-eyes-closed {
+  display: none;
+}
+
+.pet-happy .pet-eyes-idle {
+  display: none;
+}
+
+.pet-happy .pet-eyes-happy,
+.pet-stroke .pet-eyes-closed {
+  display: inline;
+}
+
+.pet-stroke .pet-eyes-idle,
+.pet-stroke .pet-eyes-happy {
+  display: none;
+}
+
+.pet-stroke .pet-body {
+  animation: pet-stroke-sway 0.7s ease-in-out infinite;
+}
+
+.pet-boop,
+.pet-happy.pet-boop {
+  animation: pet-boop 1s ease;
+}
+
+@keyframes pet-boop {
+  0% { transform: translateY(0) scale(1, 1); }
+  8% { transform: translateY(6px) scale(1.12, 0.86); }
+  22% { transform: translateY(-24px) scale(0.92, 1.12); }
+  36% { transform: translateY(6px) scale(1.1, 0.88); }
+  50% { transform: translateY(-22px) scale(0.93, 1.1); }
+  64% { transform: translateY(4px) scale(1.06, 0.94); }
+  78% { transform: translateY(1px) scale(1.02, 0.98); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+@keyframes pet-stroke-sway {
+  0%,
+  100% { transform: rotate(-4deg) translateY(2px); }
+  50% { transform: rotate(4deg) translateY(0); }
+}
+
+@keyframes pet-breath {
+  0%,
+  100% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(1.5px) scale(1.025, 0.975); }
+}
+
+@keyframes pet-blink {
+  0%,
+  90%,
+  100% { transform: scaleY(1); }
+  93% { transform: scaleY(0.08); }
+}
+
+/* ===== Pet: screen, room background, feeding ===== */
+
 .pet-screen { padding-bottom: 24px; }
 .pet-screen.pet-room {
   position: relative;
@@ -979,6 +984,7 @@ button { cursor: pointer; }
   flex-shrink: 0;
   margin: 0 2px 4px;
   padding: 12px 10px 8px;
+  min-height: 111px;
   background: rgba(255, 255, 255, 0.94);
   border-radius: 22px;
   box-shadow: var(--shadow);
@@ -987,6 +993,10 @@ button { cursor: pointer; }
   justify-content: center;
 }
 .shelf-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
   text-align: center;
   color: var(--muted);
