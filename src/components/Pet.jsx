@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 const BOOP_MS = 1000
 const STROKE_START = 18
 
-export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'short', asleep = false, onWake }) {
+export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'short', asleep = false, lounging = false, onWake }) {
   const wrapRef = useRef(null)
   const bodyLookRef = useRef(null)
   const faceRef = useRef(null)
@@ -103,7 +103,7 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'sh
     const stroked = didStroke.current
     tapOrigin.current = null
     didStroke.current = false
-    if (asleep) onWake?.()
+    if (asleep || lounging) onWake?.()
     if (stroked) {
       const linger = stroke === 'full' ? 480 : 200
       window.clearTimeout(strokeTimer.current)
@@ -136,7 +136,7 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'sh
   return (
     <div
       ref={wrapRef}
-      className={`pet pet-${happy ? 'happy' : 'idle'}${boop ? ' pet-boop' : ''}${stroking ? ' pet-stroke' : ''}${asleep ? ' pet-asleep' : ''}`}
+      className={`pet pet-${happy ? 'happy' : 'idle'}${boop ? ' pet-boop' : ''}${stroking ? ' pet-stroke' : ''}${asleep ? ' pet-asleep' : ''}${lounging ? ' pet-lounge' : ''}`}
       style={{ width: size, height: size * 1.12 }}
       role="button"
       tabIndex={0}
@@ -181,6 +181,7 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'sh
         </defs>
         <ellipse cx="120" cy="198" rx="58" ry="7" fill="rgba(40, 30, 24, 0.12)" />
         <g style={{ transform: `scale(${scale})`, transformOrigin: '120px 188px' }}>
+        <g className="pet-posture">
           <g ref={bodyLookRef} className="pet-body-look">
             <g className="pet-body">
               <path
@@ -253,6 +254,7 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'sh
             </g>
             <path fill="#4a4a4a" d="M120 147 L112 152 Q120 156 128 152 Z" />
           </g>
+        </g>
         </g>
       </svg>
     </div>

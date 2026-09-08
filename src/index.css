@@ -832,6 +832,10 @@ button { cursor: pointer; }
   overflow: visible;
 }
 
+.pet-posture {
+  transform-origin: 120px 188px;
+}
+
 .pet-body {
   transform-origin: 120px 188px;
   animation: pet-breath 2.8s ease-in-out infinite;
@@ -866,7 +870,7 @@ button { cursor: pointer; }
   display: none;
 }
 
-.pet-stroke .pet-body {
+.pet-stroke .pet-posture {
   animation: pet-stroke-sway 0.7s ease-in-out infinite;
 }
 
@@ -877,6 +881,27 @@ button { cursor: pointer; }
 
 .pet-asleep .pet-eyes-closed {
   display: inline;
+}
+
+.pet-lounge .pet-posture {
+  animation: pet-lounge-sway 7s ease-in-out infinite;
+}
+
+.pet-lounge .pet-eyes-idle,
+.pet-lounge .pet-eyes-happy {
+  display: none;
+}
+
+.pet-lounge .pet-eyes-closed {
+  display: inline;
+}
+
+@keyframes pet-lounge-sway {
+  0%, 12% { transform: rotate(0deg); }
+  18%, 26% { transform: rotate(-7deg); }
+  34%, 58% { transform: rotate(0deg); }
+  66%, 74% { transform: rotate(6deg); }
+  82%, 100% { transform: rotate(0deg); }
 }
 
 .pet-zzz {
