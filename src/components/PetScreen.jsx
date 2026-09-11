@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Pet from './Pet'
 import { useStore } from '../store'
 import { STAT_META, levelCopy, levelForXp, recentGrowthText } from '../growthData'
@@ -8,6 +8,10 @@ function pickAmbientMood() {
   return AMBIENT_MOODS[Math.floor(Math.random() * AMBIENT_MOODS.length)]
 }
 
+const DRIFT_PERIOD_MS = 5000
+const PET_RANGE = 65
+const BROOM_SIDE_OFFSET = 55
+
 export default function PetScreen() {
   const { candies, pet, growthStage, feedCandy, restoreSamples } = useStore()
   const [happy, setHappy] = useState(false)
@@ -16,8 +20,27 @@ export default function PetScreen() {
   const [view, setView] = useState('pet')
   const [selectedStat, setSelectedStat] = useState(null)
   const [ambientMood, setAmbientMood] = useState(pickAmbientMood)
+  const [cleaning, setCleaning] = useState(false)
+  const [cleanTime, setCleanTime] = useState(0)
   const asleep = ambientMood === 'asleep'
   const lounging = ambientMood === 'lounging'
+
+  useEffect(() => {
+    if (!cleaning) return
+    let frame
+    const start = performance.now()
+    function loop(now) {
+      setCleanTime(now - start)
+      frame = requestAnimationFrame(loop)
+    }
+    frame = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(frame)
+  }, [cleaning])
+
+  const driftAngle = (cleanTime / DRIFT_PERIOD_MS) * Math.PI * 2
+  const petX = Math.sin(driftAngle) * PET_RANGE
+  const side = Math.tanh(Math.cos(driftAngle) * 4)
+  const broomX = petX + side * BROOM_SIDE_OFFSET
 
   function feed(id) {
     if (!id) return
@@ -84,14 +107,42 @@ export default function PetScreen() {
         </div>
       </div>
       <header className="topbar">
-        <span className="spacer" />
+        <button className="text-btn test-toggle" onClick={() => setCleaning((v) => !v)} aria-label="테스트: 청소하기 애니메이션">🧹 테스트</button>
         <div className="top-actions">
           <button className="pet-stat-btn" onClick={() => setView('stats')} aria-label="성장의 흔적">✦</button>
           <button className="text-btn danger" onClick={restore}>샘플 복원</button>
         </div>
       </header>
       <div className={`pet-drop ${dragging ? 'ready' : ''}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); feed(event.dataTransfer.getData('text/plain') || dragging) }}>
-        <Pet size={210} grown={growthStage} mood={happy ? 'happy' : 'idle'} stroke="full" asleep={asleep} lounging={lounging} onWake={() => setAmbientMood('idle')} />
+        <div className="pet-stage">
+          {cleaning && (
+            <div className="pet-broom-drift" style={{ transform: `translateX(calc(-50% + ${broomX}px))` }}>
+              <svg className="pet-broom" viewBox="0 0 60 80" aria-hidden="true">
+                <line x1="30" y1="4" x2="30" y2="47" stroke="#8b5e34" strokeWidth="5" strokeLinecap="round" />
+                <path
+                  fill="#e0b24a"
+                  filter="url(#hopit-crayon)"
+                  d="M19 47 L41 47 L47 73 L13 73 Z"
+                />
+                <line x1="21" y1="49" x2="15" y2="72" stroke="#a9782c" strokeWidth="1.6" strokeLinecap="round" />
+                <line x1="25.5" y1="48" x2="22.5" y2="73" stroke="#a9782c" strokeWidth="1.6" strokeLinecap="round" />
+                <line x1="30" y1="48" x2="30" y2="73" stroke="#a9782c" strokeWidth="1.6" strokeLinecap="round" />
+                <line x1="34.5" y1="48" x2="37.5" y2="73" stroke="#a9782c" strokeWidth="1.6" strokeLinecap="round" />
+                <line x1="39" y1="49" x2="45" y2="72" stroke="#a9782c" strokeWidth="1.6" strokeLinecap="round" />
+                <rect x="16" y="43" width="28" height="7" rx="2.5" fill="#5b4636" />
+              </svg>
+              <div className="pet-dust" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+            </div>
+          )}
+          <div className={cleaning ? 'pet-chasing' : undefined} style={cleaning ? { transform: `translateX(${petX}px)` } : undefined}>
+            <Pet size={210} grown={growthStage} mood={happy ? 'happy' : 'idle'} stroke="full" asleep={asleep} lounging={lounging} cleaning={cleaning} onWake={() => setAmbientMood('idle')} />
+          </div>
+        </div>
         {happy && <div className="speech">맛있어! ✦</div>}
         <p className="pet-line">{recentGrowthText(pet.feedHistory)}</p>
       </div>

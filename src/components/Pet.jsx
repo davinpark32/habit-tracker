@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 const BOOP_MS = 1000
 const STROKE_START = 18
 
-export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'short', asleep = false, lounging = false, onWake }) {
+export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'short', asleep = false, lounging = false, cleaning = false, onWake }) {
   const wrapRef = useRef(null)
   const bodyLookRef = useRef(null)
   const faceRef = useRef(null)
@@ -136,7 +136,7 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'sh
   return (
     <div
       ref={wrapRef}
-      className={`pet pet-${happy ? 'happy' : 'idle'}${boop ? ' pet-boop' : ''}${stroking ? ' pet-stroke' : ''}${asleep ? ' pet-asleep' : ''}${lounging ? ' pet-lounge' : ''}`}
+      className={`pet pet-${happy ? 'happy' : 'idle'}${boop ? ' pet-boop' : ''}${stroking ? ' pet-stroke' : ''}${asleep ? ' pet-asleep' : ''}${lounging ? ' pet-lounge' : ''}${cleaning ? ' pet-cleaning' : ''}`}
       style={{ width: size, height: size * 1.12 }}
       role="button"
       tabIndex={0}
