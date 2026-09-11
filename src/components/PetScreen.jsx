@@ -29,6 +29,7 @@ export default function PetScreen() {
   const [exercising, setExercising] = useState(false)
   const [reading, setReading] = useState(false)
   const [readTime, setReadTime] = useState(0)
+  const [meditating, setMeditating] = useState(false)
   const asleep = ambientMood === 'asleep'
   const lounging = ambientMood === 'lounging'
 
@@ -145,24 +146,29 @@ export default function PetScreen() {
         <div className="test-toggle-group">
           <button
             className="text-btn test-toggle"
-            onClick={() => toggleTest(setCleaning, [setSinging, setExercising, setReading])}
+            onClick={() => toggleTest(setCleaning, [setSinging, setExercising, setReading, setMeditating])}
             aria-label="테스트: 청소하기 애니메이션"
           >🧹 테스트</button>
           <button
             className="text-btn test-toggle"
-            onClick={() => toggleTest(setSinging, [setCleaning, setExercising, setReading])}
+            onClick={() => toggleTest(setSinging, [setCleaning, setExercising, setReading, setMeditating])}
             aria-label="테스트: 노래하기 애니메이션"
           >🎤 테스트</button>
           <button
             className="text-btn test-toggle"
-            onClick={() => toggleTest(setExercising, [setCleaning, setSinging, setReading])}
+            onClick={() => toggleTest(setExercising, [setCleaning, setSinging, setReading, setMeditating])}
             aria-label="테스트: 덤벨 운동 애니메이션"
           >🏋️ 테스트</button>
           <button
             className="text-btn test-toggle"
-            onClick={() => toggleTest(setReading, [setCleaning, setSinging, setExercising])}
+            onClick={() => toggleTest(setReading, [setCleaning, setSinging, setExercising, setMeditating])}
             aria-label="테스트: 책읽기 애니메이션"
           >📖 테스트</button>
+          <button
+            className="text-btn test-toggle"
+            onClick={() => toggleTest(setMeditating, [setCleaning, setSinging, setExercising, setReading])}
+            aria-label="테스트: 명상하기 애니메이션"
+          >🧘 테스트</button>
         </div>
         <div className="top-actions">
           <button className="pet-stat-btn" onClick={() => setView('stats')} aria-label="성장의 흔적">✦</button>
@@ -171,6 +177,22 @@ export default function PetScreen() {
       </header>
       <div className={`pet-drop ${dragging ? 'ready' : ''}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); feed(event.dataTransfer.getData('text/plain') || dragging) }}>
         <div className="pet-stage">
+          {meditating && (
+            <svg className="pet-cushion" viewBox="0 0 100 40" aria-hidden="true">
+              <rect x="8" y="6" width="84" height="28" rx="6" fill="#c94a3d" filter="url(#hopit-crayon)" />
+            </svg>
+          )}
+          {meditating && (
+            <div className="pet-tea-stand">
+              <svg className="pet-tea" viewBox="0 0 50 55" aria-hidden="true">
+                <path className="pet-steam" d="M18 18 Q14 12 18 6" fill="none" stroke="#cfd8dc" strokeWidth="2.5" strokeLinecap="round" />
+                <path className="pet-steam pet-steam-2" d="M30 18 Q26 12 30 6" fill="none" stroke="#cfd8dc" strokeWidth="2.5" strokeLinecap="round" />
+                <ellipse cx="25" cy="46" rx="19" ry="5" fill="#8b5e34" />
+                <path d="M40 26 Q48 26 48 32 Q48 38 40 36" fill="none" stroke="#8b5e34" strokeWidth="3" />
+                <path d="M10 22 L40 22 L35 42 L15 42 Z" fill="#8b5e34" filter="url(#hopit-crayon)" />
+              </svg>
+            </div>
+          )}
           {cleaning && (
             <div className="pet-broom-drift" style={{ transform: `translateX(calc(-50% + ${broomX}px))` }}>
               <svg className="pet-broom" viewBox="0 0 60 80" aria-hidden="true">
@@ -231,7 +253,7 @@ export default function PetScreen() {
             </div>
           )}
           <div className={cleaning ? 'pet-chasing' : undefined} style={cleaning ? { transform: `translateX(${petX}px)` } : undefined}>
-            <Pet size={210} grown={growthStage} mood={happy ? 'happy' : 'idle'} stroke="full" asleep={asleep} lounging={lounging} cleaning={cleaning} singing={singing} exercising={exercising} reading={reading} gazeX={reading ? readGazeX : null} gazeY={reading ? READ_GAZE_Y : null} onWake={() => setAmbientMood('idle')} />
+            <Pet size={210} grown={growthStage} mood={happy ? 'happy' : 'idle'} stroke="full" asleep={asleep} lounging={lounging} cleaning={cleaning} singing={singing} exercising={exercising} reading={reading} meditating={meditating} gazeX={reading ? readGazeX : null} gazeY={reading ? READ_GAZE_Y : null} onWake={() => setAmbientMood('idle')} />
           </div>
         </div>
         {happy && <div className="speech">맛있어! ✦</div>}
