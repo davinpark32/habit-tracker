@@ -3,13 +3,14 @@ import { useEffect, useId, useRef, useState } from 'react'
 const BOOP_MS = 1000
 const STROKE_START = 18
 
-export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'short', asleep = false, lounging = false, cleaning = false, singing = false, exercising = false, onWake }) {
+export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'short', asleep = false, lounging = false, cleaning = false, singing = false, exercising = false, reading = false, gazeX = null, gazeY = null, onWake }) {
   const wrapRef = useRef(null)
   const bodyLookRef = useRef(null)
   const faceRef = useRef(null)
   const look = useRef({ x: 0, y: 0 })
   const target = useRef({ x: 0, y: 0 })
   const lastPointer = useRef(0)
+  const gazeRef = useRef({ x: gazeX, y: gazeY })
   const tapOrigin = useRef(null)
   const didStroke = useRef(false)
   const boopTimer = useRef(0)
@@ -17,6 +18,10 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'sh
   const [boop, setBoop] = useState(false)
   const [stroking, setStroking] = useState(false)
   const uid = useId().replace(/:/g, '')
+
+  useEffect(() => {
+    gazeRef.current = { x: gazeX, y: gazeY }
+  }, [gazeX, gazeY])
 
   useEffect(() => {
     const wrap = wrapRef.current
@@ -34,9 +39,10 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'sh
 
     function tick(now) {
       if (!running) return
+      const gaze = gazeRef.current
       const idle = now - lastPointer.current > 1600
-      const aimX = idle ? Math.sin(now * 0.0011) * 0.22 : target.current.x
-      const aimY = idle ? Math.cos(now * 0.0008) * 0.1 : target.current.y
+      const aimX = gaze.x != null ? gaze.x : idle ? Math.sin(now * 0.0011) * 0.22 : target.current.x
+      const aimY = gaze.y != null ? gaze.y : idle ? Math.cos(now * 0.0008) * 0.1 : target.current.y
       look.current.x += (aimX - look.current.x) * 0.12
       look.current.y += (aimY - look.current.y) * 0.12
       const { x, y } = look.current
@@ -136,7 +142,7 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'sh
   return (
     <div
       ref={wrapRef}
-      className={`pet pet-${happy ? 'happy' : 'idle'}${boop ? ' pet-boop' : ''}${stroking ? ' pet-stroke' : ''}${asleep ? ' pet-asleep' : ''}${lounging ? ' pet-lounge' : ''}${cleaning ? ' pet-cleaning' : ''}${singing ? ' pet-singing' : ''}${exercising ? ' pet-exercising' : ''}`}
+      className={`pet pet-${happy ? 'happy' : 'idle'}${boop ? ' pet-boop' : ''}${stroking ? ' pet-stroke' : ''}${asleep ? ' pet-asleep' : ''}${lounging ? ' pet-lounge' : ''}${cleaning ? ' pet-cleaning' : ''}${singing ? ' pet-singing' : ''}${exercising ? ' pet-exercising' : ''}${reading ? ' pet-reading' : ''}`}
       style={{ width: size, height: size * 1.12 }}
       role="button"
       tabIndex={0}

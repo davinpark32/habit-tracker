@@ -1198,6 +1198,33 @@ button { cursor: pointer; }
   animation: dumbbell-bob 1.3s ease-in-out infinite;
 }
 
+.pet-book-stand {
+  position: absolute;
+  left: 50%;
+  bottom: 2%;
+  z-index: 2;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.pet-book {
+  display: block;
+  width: 94px;
+  height: 63px;
+  overflow: visible;
+}
+
+.pet-book-page {
+  transform-box: fill-box;
+  transform-origin: 0% 50%;
+  animation: page-turn 10s ease-in-out infinite;
+}
+
+@keyframes page-turn {
+  0%, 70%, 100% { transform: scaleX(1); }
+  85% { transform: scaleX(0.12); }
+}
+
 @keyframes dumbbell-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(34px); }

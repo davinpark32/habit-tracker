@@ -11,6 +11,9 @@ function pickAmbientMood() {
 const DRIFT_PERIOD_MS = 5000
 const PET_RANGE = 65
 const BROOM_SIDE_OFFSET = 55
+const READ_PERIOD_MS = 3600
+const READ_SWEEP_FRACTION = 0.85
+const READ_GAZE_Y = 0.6
 
 export default function PetScreen() {
   const { candies, pet, growthStage, feedCandy, restoreSamples } = useStore()
@@ -24,8 +27,21 @@ export default function PetScreen() {
   const [cleanTime, setCleanTime] = useState(0)
   const [singing, setSinging] = useState(false)
   const [exercising, setExercising] = useState(false)
+  const [reading, setReading] = useState(false)
+  const [readTime, setReadTime] = useState(0)
   const asleep = ambientMood === 'asleep'
   const lounging = ambientMood === 'lounging'
+
+  function toggleTest(setter, others) {
+    setter((v) => {
+      const next = !v
+      if (next) {
+        others.forEach((setOther) => setOther(false))
+        setAmbientMood('idle')
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     if (!cleaning) return
@@ -38,6 +54,23 @@ export default function PetScreen() {
     frame = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(frame)
   }, [cleaning])
+
+  useEffect(() => {
+    if (!reading) return
+    let frame
+    const start = performance.now()
+    function loop(now) {
+      setReadTime(now - start)
+      frame = requestAnimationFrame(loop)
+    }
+    frame = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(frame)
+  }, [reading])
+
+  const readPhase = (readTime % READ_PERIOD_MS) / READ_PERIOD_MS
+  const readGazeX = readPhase < READ_SWEEP_FRACTION
+    ? -1 + 2 * (readPhase / READ_SWEEP_FRACTION)
+    : 1 - 2 * ((readPhase - READ_SWEEP_FRACTION) / (1 - READ_SWEEP_FRACTION))
 
   const driftAngle = (cleanTime / DRIFT_PERIOD_MS) * Math.PI * 2
   const petX = Math.sin(driftAngle) * PET_RANGE
@@ -112,19 +145,24 @@ export default function PetScreen() {
         <div className="test-toggle-group">
           <button
             className="text-btn test-toggle"
-            onClick={() => setCleaning((v) => { const next = !v; if (next) { setSinging(false); setExercising(false); setAmbientMood('idle') } return next })}
+            onClick={() => toggleTest(setCleaning, [setSinging, setExercising, setReading])}
             aria-label="테스트: 청소하기 애니메이션"
           >🧹 테스트</button>
           <button
             className="text-btn test-toggle"
-            onClick={() => setSinging((v) => { const next = !v; if (next) { setCleaning(false); setExercising(false); setAmbientMood('idle') } return next })}
+            onClick={() => toggleTest(setSinging, [setCleaning, setExercising, setReading])}
             aria-label="테스트: 노래하기 애니메이션"
           >🎤 테스트</button>
           <button
             className="text-btn test-toggle"
-            onClick={() => setExercising((v) => { const next = !v; if (next) { setCleaning(false); setSinging(false); setAmbientMood('idle') } return next })}
+            onClick={() => toggleTest(setExercising, [setCleaning, setSinging, setReading])}
             aria-label="테스트: 덤벨 운동 애니메이션"
           >🏋️ 테스트</button>
+          <button
+            className="text-btn test-toggle"
+            onClick={() => toggleTest(setReading, [setCleaning, setSinging, setExercising])}
+            aria-label="테스트: 책읽기 애니메이션"
+          >📖 테스트</button>
         </div>
         <div className="top-actions">
           <button className="pet-stat-btn" onClick={() => setView('stats')} aria-label="성장의 흔적">✦</button>
@@ -179,8 +217,21 @@ export default function PetScreen() {
               </svg>
             </div>
           )}
+          {reading && (
+            <div className="pet-book-stand">
+              <svg className="pet-book" viewBox="0 0 90 60" aria-hidden="true">
+                <rect x="5" y="6" width="36" height="52" rx="2" fill="#fdf6ec" />
+                <g className="pet-book-page">
+                  <rect x="49" y="6" width="36" height="52" rx="2" fill="#fdf6ec" />
+                  <rect x="50" y="3" width="32" height="50" rx="3" fill="#2f6fb3" filter="url(#hopit-crayon)" />
+                </g>
+                <rect x="8" y="3" width="32" height="50" rx="3" fill="#2f6fb3" filter="url(#hopit-crayon)" />
+                <rect x="39" y="2" width="12" height="52" rx="3" fill="#1f4d80" />
+              </svg>
+            </div>
+          )}
           <div className={cleaning ? 'pet-chasing' : undefined} style={cleaning ? { transform: `translateX(${petX}px)` } : undefined}>
-            <Pet size={210} grown={growthStage} mood={happy ? 'happy' : 'idle'} stroke="full" asleep={asleep} lounging={lounging} cleaning={cleaning} singing={singing} exercising={exercising} onWake={() => setAmbientMood('idle')} />
+            <Pet size={210} grown={growthStage} mood={happy ? 'happy' : 'idle'} stroke="full" asleep={asleep} lounging={lounging} cleaning={cleaning} singing={singing} exercising={exercising} reading={reading} gazeX={reading ? readGazeX : null} gazeY={reading ? READ_GAZE_Y : null} onWake={() => setAmbientMood('idle')} />
           </div>
         </div>
         {happy && <div className="speech">맛있어! ✦</div>}
