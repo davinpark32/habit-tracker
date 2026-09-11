@@ -922,6 +922,24 @@ button { cursor: pointer; }
   50% { transform: translateY(10px) scale(1.08, 0.9); }
 }
 
+.pet-meditating .pet-eyes-idle,
+.pet-meditating .pet-eyes-happy {
+  display: none;
+}
+
+.pet-meditating .pet-eyes-closed {
+  display: inline;
+}
+
+.pet-meditating .pet-body {
+  animation: pet-meditate-breath 4.6s ease-in-out infinite;
+}
+
+@keyframes pet-meditate-breath {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-5px) scale(1.06, 0.94); }
+}
+
 .pet-notes {
   position: absolute;
   top: 2%;
@@ -1212,6 +1230,48 @@ button { cursor: pointer; }
   width: 94px;
   height: 63px;
   overflow: visible;
+}
+
+.pet-cushion {
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  width: 130px;
+  height: 52px;
+  overflow: visible;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.pet-tea-stand {
+  position: absolute;
+  left: 50%;
+  bottom: 6%;
+  z-index: 2;
+  transform: translateX(calc(-50% + 82px));
+  pointer-events: none;
+}
+
+.pet-tea {
+  display: block;
+  width: 50px;
+  height: 55px;
+  overflow: visible;
+}
+
+.pet-steam {
+  opacity: 0;
+  animation: steam-rise 2.4s ease-in-out infinite;
+}
+
+.pet-steam-2 {
+  animation-delay: 0.8s;
+}
+
+@keyframes steam-rise {
+  0% { opacity: 0; transform: translateY(4px); }
+  30% { opacity: 0.6; }
+  100% { opacity: 0; transform: translateY(-26px); }
 }
 
 .pet-book-page {
