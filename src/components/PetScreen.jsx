@@ -22,6 +22,8 @@ export default function PetScreen() {
   const [ambientMood, setAmbientMood] = useState(pickAmbientMood)
   const [cleaning, setCleaning] = useState(false)
   const [cleanTime, setCleanTime] = useState(0)
+  const [singing, setSinging] = useState(false)
+  const [exercising, setExercising] = useState(false)
   const asleep = ambientMood === 'asleep'
   const lounging = ambientMood === 'lounging'
 
@@ -107,7 +109,23 @@ export default function PetScreen() {
         </div>
       </div>
       <header className="topbar">
-        <button className="text-btn test-toggle" onClick={() => setCleaning((v) => !v)} aria-label="테스트: 청소하기 애니메이션">🧹 테스트</button>
+        <div className="test-toggle-group">
+          <button
+            className="text-btn test-toggle"
+            onClick={() => setCleaning((v) => { const next = !v; if (next) { setSinging(false); setExercising(false); setAmbientMood('idle') } return next })}
+            aria-label="테스트: 청소하기 애니메이션"
+          >🧹 테스트</button>
+          <button
+            className="text-btn test-toggle"
+            onClick={() => setSinging((v) => { const next = !v; if (next) { setCleaning(false); setExercising(false); setAmbientMood('idle') } return next })}
+            aria-label="테스트: 노래하기 애니메이션"
+          >🎤 테스트</button>
+          <button
+            className="text-btn test-toggle"
+            onClick={() => setExercising((v) => { const next = !v; if (next) { setCleaning(false); setSinging(false); setAmbientMood('idle') } return next })}
+            aria-label="테스트: 덤벨 운동 애니메이션"
+          >🏋️ 테스트</button>
+        </div>
         <div className="top-actions">
           <button className="pet-stat-btn" onClick={() => setView('stats')} aria-label="성장의 흔적">✦</button>
           <button className="text-btn danger" onClick={restore}>샘플 복원</button>
@@ -139,8 +157,30 @@ export default function PetScreen() {
               </div>
             </div>
           )}
+          {singing && (
+            <div className="pet-mic-stand">
+              <svg className="pet-mic" viewBox="0 0 50 90" aria-hidden="true">
+                <ellipse cx="25" cy="86" rx="14" ry="4" fill="#4a4a4a" />
+                <line x1="25" y1="84" x2="25" y2="34" stroke="#4a4a4a" strokeWidth="4" strokeLinecap="round" />
+                <rect x="21" y="30" width="8" height="8" rx="2" fill="#6b6560" />
+                <ellipse cx="25" cy="18" rx="12" ry="16" fill="#3f342c" filter="url(#hopit-crayon)" />
+                <ellipse cx="21" cy="12" rx="3.5" ry="5" fill="rgba(255,255,255,0.18)" />
+              </svg>
+            </div>
+          )}
+          {exercising && (
+            <div className="pet-dumbbell-stand">
+              <svg className="pet-dumbbell" viewBox="0 0 70 40" aria-hidden="true">
+                <rect x="20" y="17" width="30" height="6" rx="3" fill="#6b6560" />
+                <circle cx="14" cy="20" r="13" fill="#3f342c" filter="url(#hopit-crayon)" />
+                <circle cx="56" cy="20" r="13" fill="#3f342c" filter="url(#hopit-crayon)" />
+                <ellipse cx="10" cy="15" rx="3" ry="4" fill="rgba(255,255,255,0.16)" />
+                <ellipse cx="52" cy="15" rx="3" ry="4" fill="rgba(255,255,255,0.16)" />
+              </svg>
+            </div>
+          )}
           <div className={cleaning ? 'pet-chasing' : undefined} style={cleaning ? { transform: `translateX(${petX}px)` } : undefined}>
-            <Pet size={210} grown={growthStage} mood={happy ? 'happy' : 'idle'} stroke="full" asleep={asleep} lounging={lounging} cleaning={cleaning} onWake={() => setAmbientMood('idle')} />
+            <Pet size={210} grown={growthStage} mood={happy ? 'happy' : 'idle'} stroke="full" asleep={asleep} lounging={lounging} cleaning={cleaning} singing={singing} exercising={exercising} onWake={() => setAmbientMood('idle')} />
           </div>
         </div>
         {happy && <div className="speech">맛있어! ✦</div>}
