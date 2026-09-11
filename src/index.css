@@ -1274,6 +1274,101 @@ button { cursor: pointer; }
   100% { opacity: 0; transform: translateY(-26px); }
 }
 
+.pet-plant-stand {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  z-index: 1;
+  transform: translateX(calc(-50% + 78px));
+  pointer-events: none;
+}
+
+.pet-plant {
+  display: block;
+  width: 60px;
+  height: 70px;
+  overflow: visible;
+}
+
+.pet-leaves {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: leaf-wiggle 3s ease-in-out infinite;
+}
+
+@keyframes leaf-wiggle {
+  0%, 78%, 100% { transform: rotate(0deg); }
+  85% { transform: rotate(-6deg); }
+  92% { transform: rotate(5deg); }
+}
+
+.pet-can-stand {
+  position: absolute;
+  left: 50%;
+  bottom: 22%;
+  z-index: 2;
+  transform: translateX(calc(-50% + 58px));
+  pointer-events: none;
+}
+
+.pet-can {
+  display: block;
+  width: 60px;
+  height: 50px;
+  overflow: visible;
+  transform-origin: 20% 70%;
+  animation: can-pour 3s ease-in-out infinite;
+}
+
+@keyframes can-pour {
+  0%, 70%, 100% { transform: rotate(0deg); }
+  80%, 88% { transform: rotate(-32deg); }
+}
+
+.pet-water-drops {
+  position: absolute;
+  left: 46px;
+  top: 24px;
+  pointer-events: none;
+}
+
+.pet-water-drops span {
+  position: absolute;
+  width: 5px;
+  height: 7px;
+  border-radius: 50% 50% 50% 0;
+  background: #6fb3d8;
+  opacity: 0;
+  animation: drop-fall 3s ease-in infinite;
+}
+
+.pet-water-drops span:nth-child(2) {
+  left: 6px;
+  animation-delay: 0.15s;
+}
+
+.pet-water-drops span:nth-child(3) {
+  left: -6px;
+  animation-delay: 0.3s;
+}
+
+.pet-water-drops span:nth-child(4) {
+  left: 12px;
+  animation-delay: 0.45s;
+}
+
+.pet-water-drops span:nth-child(5) {
+  left: 0px;
+  animation-delay: 0.6s;
+}
+
+@keyframes drop-fall {
+  0%, 76% { opacity: 0; transform: translateY(0) rotate(45deg); }
+  80% { opacity: 0.9; }
+  90% { opacity: 0.6; transform: translateY(26px) rotate(45deg); }
+  95%, 100% { opacity: 0; transform: translateY(30px) rotate(45deg); }
+}
+
 .pet-book-page {
   transform-box: fill-box;
   transform-origin: 0% 50%;

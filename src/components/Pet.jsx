@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 const BOOP_MS = 1000
 const STROKE_START = 18
 
-export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'short', asleep = false, lounging = false, cleaning = false, singing = false, exercising = false, reading = false, meditating = false, gazeX = null, gazeY = null, onWake }) {
+export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'short', asleep = false, lounging = false, cleaning = false, singing = false, exercising = false, reading = false, meditating = false, caring = false, gazeX = null, gazeY = null, onWake }) {
   const wrapRef = useRef(null)
   const bodyLookRef = useRef(null)
   const faceRef = useRef(null)
@@ -142,7 +142,7 @@ export default function Pet({ size = 140, mood = 'idle', grown = 0, stroke = 'sh
   return (
     <div
       ref={wrapRef}
-      className={`pet pet-${happy ? 'happy' : 'idle'}${boop ? ' pet-boop' : ''}${stroking ? ' pet-stroke' : ''}${asleep ? ' pet-asleep' : ''}${lounging ? ' pet-lounge' : ''}${cleaning ? ' pet-cleaning' : ''}${singing ? ' pet-singing' : ''}${exercising ? ' pet-exercising' : ''}${reading ? ' pet-reading' : ''}${meditating ? ' pet-meditating' : ''}`}
+      className={`pet pet-${happy ? 'happy' : 'idle'}${boop ? ' pet-boop' : ''}${stroking ? ' pet-stroke' : ''}${asleep ? ' pet-asleep' : ''}${lounging ? ' pet-lounge' : ''}${cleaning ? ' pet-cleaning' : ''}${singing ? ' pet-singing' : ''}${exercising ? ' pet-exercising' : ''}${reading ? ' pet-reading' : ''}${meditating ? ' pet-meditating' : ''}${caring ? ' pet-caring' : ''}`}
       style={{ width: size, height: size * 1.12 }}
       role="button"
       tabIndex={0}
